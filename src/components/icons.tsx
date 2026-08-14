@@ -197,6 +197,11 @@ export const IconExpand = (p: P) => (
     <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
   </S>
 );
+export const IconFullscreenExit = (p: P) => (
+  <S {...p}>
+    <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+  </S>
+);
 export const IconLayers = (p: P) => (
   <S {...p}>
     <path d="M12 3l9 5-9 5-9-5 9-5z" />

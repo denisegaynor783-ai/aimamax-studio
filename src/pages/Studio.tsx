@@ -47,7 +47,7 @@ export default function Studio() {
 
   return (
     <ReactFlowProvider>
-      <div className="studio-layout" data-mode={mode}>
+      <div id="studio-layout" className="studio-layout" data-mode={mode}>
         <div className="studio-modebar">
           <div className="seg">
             <button data-active={mode === "canvas"} onClick={() => setMode("canvas")}>

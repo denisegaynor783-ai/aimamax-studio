@@ -22,7 +22,7 @@ import { StudioNode } from "./StudioNode";
 import { Button, IconButton } from "../components/ui";
 import {
   IconPlus, IconCharacter, IconScene, IconImage, IconText, IconMusic, IconSave, IconExpand,
-  IconLayout, IconGrid,
+  IconFullscreenExit, IconLayout, IconGrid,
 } from "../components/icons";
 import type { NodeKind, EdgeRel as EdgeRelType } from "../lib/types";
 
@@ -65,7 +65,26 @@ export function DirectorCanvas() {
   const [addOpen, setAddOpen] = useState(false);
   const [bg, setBg] = useState<BgMode>("dots");
   const [pendingEdgeId, setPendingEdgeId] = useState<string | null>(null);
+  const [isFs, setIsFs] = useState(false);
   const shots = nodes.filter((n) => n.data.kind === "shot");
+
+  // —— 全屏工作台（含工具栏 / 检视器 / 缩略图条）——
+  useEffect(() => {
+    const onFs = () => setIsFs(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+  const toggleFullscreen = useCallback(() => {
+    const el = document.getElementById("studio-layout");
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      el.requestFullscreen?.().then(() => {
+        window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300 }), 350);
+      }).catch(() => {});
+    }
+  }, [rf]);
 
   // —— 自动存稿（防丢） ——
   useEffect(() => {
@@ -210,6 +229,9 @@ export function DirectorCanvas() {
         </IconButton>
         <IconButton title="保存并截图" onClick={snapAndSave}>
           <IconSave size={16} />
+        </IconButton>
+        <IconButton title={isFs ? "退出全屏（Esc）" : "全屏工作台（沉浸创作 · 工具齐全）"} onClick={toggleFullscreen}>
+          {isFs ? <IconFullscreenExit size={16} /> : <IconExpand size={16} />}
         </IconButton>
 
         <div className="flow-toolbar__div" />
