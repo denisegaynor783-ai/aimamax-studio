@@ -11,12 +11,15 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
     "@xyflow/react": "^12.3.5",
     "html-to-image": "^1.11.11",
     "idb": "^8.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
+    "three": "^0.169.0",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

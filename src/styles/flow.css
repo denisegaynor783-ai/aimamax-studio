@@ -128,7 +128,10 @@
 .inspector__body { flex: 1; overflow: auto; padding: var(--sp-4); }
 .inspector__empty { display: grid; place-items: center; height: 100%; color: var(--text-faint); text-align: center; padding: 24px; gap: 8px; }
 
-.studio-layout { flex: 1; min-height: 0; display: flex; position: relative; }
+.studio-layout { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.studio-modebar { height: 46px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--bg-panel); }
+.studio-body { flex: 1; min-height: 0; display: flex; }
+.studio-layout[data-mode="stage"] .studio-inspector { display: none; }
 .studio-inspector {
   width: 344px; flex: none; border-left: 1px solid var(--line);
   background: var(--bg-panel); height: 100%;

@@ -40,6 +40,7 @@ export function DirectorCanvas() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, saveCurrent, project } = useStudio();
   const rf = useReactFlow();
   const [addOpen, setAddOpen] = useState(false);
+  const shots = nodes.filter((n) => n.data.kind === "shot");
 
   // —— 自动存稿（防丢） ——
   useEffect(() => {
@@ -146,6 +147,37 @@ export function DirectorCanvas() {
           maskColor="rgba(7,7,9,0.7)"
         />
       </ReactFlow>
+
+      {shots.length > 0 && (
+        <div className="storyboard-strip">
+          <div className="storyboard-strip__head">分镜</div>
+          <div className="storyboard-strip__row">
+            {shots.map((n) => {
+              const r = (n.data.payload.results ?? []).find((x) => x.url);
+              return (
+                <button
+                  key={n.id}
+                  className="storyboard-chip"
+                  title={n.data.label}
+                  onClick={() => {
+                    rf.setCenter(n.position.x, n.position.y, { zoom: 1.1, duration: 400 });
+                    useStudio.getState().selectNode(n.id);
+                  }}
+                >
+                  {r ? (
+                    <img src={r.url} alt={n.data.label} />
+                  ) : (
+                    <span className="storyboard-chip__ph">
+                      <IconImage size={14} />
+                    </span>
+                  )}
+                  <span className="storyboard-chip__label">{n.data.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

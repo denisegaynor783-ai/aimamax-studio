@@ -24,3 +24,9 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+
+# vite 构建缓存
+vite.config.ts.timestamp-*.mjs
+
+# vite 构建缓存
+vite.config.ts.timestamp-*.mjs

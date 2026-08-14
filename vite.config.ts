@@ -17,6 +17,7 @@ export default defineConfig({
         manualChunks: {
           react: ["react", "react-dom", "react-router-dom"],
           flow: ["@xyflow/react"],
+          three: ["three", "@react-three/fiber", "@react-three/drei"],
         },
       },
     },

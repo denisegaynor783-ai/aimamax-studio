@@ -168,3 +168,9 @@ export const IconFilm = (p: P) => (
     <path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" />
   </S>
 );
+export const IconCube = (p: P) => (
+  <S {...p}>
+    <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+    <path d="M12 3v18M4 7.5l8 4.5 8-4.5" />
+  </S>
+);

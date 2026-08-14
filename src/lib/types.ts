@@ -29,6 +29,47 @@ export interface CanvasDoc {
 
 export interface Project extends ProjectMeta {
   doc: CanvasDoc;
+  /** 3D 导演台舞台数据（previz / 镜头时间线） */
+  stage?: StageDoc;
+}
+
+// —— 3D 导演台 ——
+export type StageObjectType = "actor" | "set" | "prop" | "light";
+export type Vec3 = [number, number, number];
+
+export interface StageObject {
+  id: string;
+  type: StageObjectType;
+  name: string;
+  /** 视觉形态：人形 / 方块 / 圆柱 / 球 / 锥 */
+  shape: "humanoid" | "box" | "cylinder" | "sphere" | "cone";
+  position: Vec3;
+  rotation: Vec3;
+  scale: Vec3;
+  color: string;
+  /** 灯光强度（仅 light） */
+  intensity?: number;
+}
+
+export interface StageShot {
+  id: string;
+  name: string;
+  /** 3D 预演截图（dataURL） */
+  thumb: string;
+  /** 拍摄时的场景快照 */
+  objects: StageObject[];
+  /** 拍摄机位 */
+  camera: { pos: Vec3; target: Vec3 };
+  /** AI 生成的关键帧（图） */
+  keyframeUrl?: string;
+  /** 关键帧生成状态 */
+  keyframeStatus?: GenStatus;
+  createdAt: number;
+}
+
+export interface StageDoc {
+  objects: StageObject[];
+  shots: StageShot[];
 }
 
 // —— 语义节点 ——
