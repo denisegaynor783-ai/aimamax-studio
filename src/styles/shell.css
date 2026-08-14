@@ -1,0 +1,107 @@
+/* ============================================================
+   AIMAMAX Studio — 应用外壳布局（rail + 顶栏 + 内容区）
+   ============================================================ */
+.app {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--rail-w) 1fr;
+  height: 100%;
+}
+
+/* —— 左导航 rail —— */
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) 0;
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-void));
+  border-right: 1px solid var(--line);
+}
+.rail__brand {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--grad-film);
+  color: var(--text-on-film);
+  box-shadow: var(--glow-film);
+  margin-bottom: var(--sp-3);
+  flex: none;
+}
+.rail__item {
+  width: 56px; height: 52px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px;
+  border-radius: var(--r-md);
+  color: var(--text-faint);
+  position: relative;
+  transition: all 0.16s var(--ease);
+  background: transparent; border: none; width: 56px;
+}
+.rail__item:hover { color: var(--text-dim); background: var(--bg-elev); }
+.rail__item[data-active="true"] {
+  color: var(--film);
+  background: rgba(255,107,26,0.1);
+}
+.rail__item[data-active="true"]::before {
+  content: ""; position: absolute; left: -1px; top: 10px; bottom: 10px; width: 3px;
+  border-radius: 3px; background: var(--film); box-shadow: 0 0 12px var(--film);
+}
+.rail__label { font-size: 9px; letter-spacing: 0.06em; }
+.rail__spacer { flex: 1; }
+
+/* —— 主区 —— */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.topbar {
+  height: var(--topbar-h);
+  flex: none;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--line);
+  background: rgba(10,10,14,0.7);
+  backdrop-filter: blur(8px);
+}
+.topbar__title { font-weight: 700; font-size: 15px; }
+.topbar__crumb { color: var(--text-faint); }
+.topbar__spacer { flex: 1; }
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: var(--sp-6);
+}
+.content--flush { padding: 0; overflow: hidden; }
+
+/* —— 页面通用 —— */
+.page-head { margin-bottom: var(--sp-5); }
+.page-head h1 { font-size: 22px; margin: 6px 0 4px; letter-spacing: -0.01em; }
+.page-head p { color: var(--text-dim); margin: 0; max-width: 640px; }
+
+/* —— 移动端底栏 —— */
+.mobilenav { display: none; }
+
+@media (max-width: 720px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .rail {
+    display: none;
+  }
+  .mobilenav {
+    display: flex;
+    grid-row: 2;
+    border-top: 1px solid var(--line);
+    background: var(--bg-panel);
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+  }
+  .mobilenav__item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--text-faint); background: none; border: none;
+  }
+  .mobilenav__item[data-active="true"] { color: var(--film); }
+  .mobilenav__label { font-size: 10px; }
+  .content { padding: var(--sp-4); }
+}

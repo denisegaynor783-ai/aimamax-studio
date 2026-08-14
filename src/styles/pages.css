@@ -1,0 +1,130 @@
+/* ============================================================
+   AIMAMAX Studio — 页面样式（发现 / 项目 / 资产 / 设置）
+   ============================================================ */
+
+/* —— 发现页 Hero —— */
+.hero {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: var(--sp-7) var(--sp-6);
+  background:
+    radial-gradient(80% 120% at 12% 0%, rgba(255,107,26,0.16), transparent 60%),
+    radial-gradient(70% 100% at 100% 10%, rgba(255,59,48,0.12), transparent 55%),
+    var(--bg-panel);
+  overflow: hidden;
+  margin-bottom: var(--sp-6);
+}
+.hero__eyebrow { color: var(--film); letter-spacing: 0.28em; font-size: 11px; }
+.hero h1 {
+  font-size: clamp(28px, 5vw, 46px);
+  line-height: 1.05;
+  margin: 14px 0 12px;
+  letter-spacing: -0.02em;
+  max-width: 760px;
+}
+.hero h1 .accent { color: var(--film); }
+.hero p { color: var(--text-dim); max-width: 560px; font-size: 15px; }
+.hero__actions { display: flex; gap: var(--sp-3); margin-top: var(--sp-5); flex-wrap: wrap; }
+.hero__stat { display: flex; gap: var(--sp-6); margin-top: var(--sp-5); flex-wrap: wrap; }
+.hero__stat b { font-size: 20px; color: var(--text); }
+.hero__stat span { font-size: 11px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* —— 区块标题 —— */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin: var(--sp-6) 0 var(--sp-4); }
+.section-head h2 { font-size: 16px; margin: 0; }
+.section-head a { font-size: 12px; }
+
+/* —— 模板卡 —— */
+.tpl-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  background: var(--bg-panel);
+  transition: all 0.18s var(--ease);
+  cursor: pointer;
+  overflow: hidden;
+}
+.tpl-card:hover { border-color: var(--line-film); transform: translateY(-3px); box-shadow: var(--sh-2); }
+.tpl-card__icon {
+  width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--bg-elev); color: var(--film); margin-bottom: var(--sp-3);
+}
+.tpl-card h3 { margin: 0 0 4px; font-size: 15px; }
+.tpl-card p { margin: 0; color: var(--text-dim); font-size: 12px; }
+
+/* —— 项目卡 —— */
+.proj-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-panel);
+  overflow: hidden;
+  transition: all 0.18s var(--ease);
+  cursor: pointer;
+}
+.proj-card:hover { border-color: var(--line-film); box-shadow: var(--sh-2); }
+.proj-card__thumb {
+  aspect-ratio: 16 / 10;
+  background: var(--bg-void);
+  display: grid; place-items: center;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+.proj-card__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.proj-card__meta { padding: var(--sp-3) var(--sp-4); }
+.proj-card__name { font-weight: 600; font-size: 14px; }
+.proj-card__sub { color: var(--text-faint); font-size: 11px; margin-top: 2px; }
+.proj-card__menu {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s var(--ease);
+}
+.proj-card:hover .proj-card__menu { opacity: 1; }
+
+/* —— 资产卡 —— */
+.asset-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-panel);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.asset-card__thumb {
+  aspect-ratio: 1; background: var(--bg-void); display: grid; place-items: center; overflow: hidden;
+}
+.asset-card__thumb img, .asset-card__thumb svg { width: 100%; height: 100%; object-fit: cover; }
+.asset-card__meta { padding: var(--sp-2) var(--sp-3); display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.asset-card__name { font-size: 12px; font-weight: 600; }
+
+/* —— 设置分组 —— */
+.set-group { margin-bottom: var(--sp-5); }
+.set-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4);
+  padding: var(--sp-4) 0; border-bottom: 1px solid var(--line);
+}
+.set-row__main { flex: 1; min-width: 0; }
+.set-row__title { font-weight: 600; font-size: 14px; }
+.set-row__desc { color: var(--text-faint); font-size: 12px; margin-top: 2px; }
+
+.prov-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--bg-panel);
+  margin-bottom: var(--sp-3);
+}
+.prov-card[data-enabled="true"] { border-color: var(--line-film); }
+
+/* —— 工具条（通用） —— */
+.toolrow { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
+
+/* —— 分镜表 —— */
+.story-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.story-table th, .story-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.story-table th { color: var(--text-faint); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; }
+.story-table img { width: 96px; border-radius: 6px; }
+
+/* —— 模态内表单 —— */
+.form-row { display: flex; gap: var(--sp-3); }
+.form-row > * { flex: 1; }

@@ -1,0 +1,167 @@
+/* ============================================================
+   AIMAMAX Studio — 组件样式
+   ============================================================ */
+
+/* —— 按钮 —— */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elev);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  transition: all 0.16s var(--ease);
+  white-space: nowrap;
+  user-select: none;
+}
+.btn:hover { background: var(--bg-hover); border-color: var(--line-strong); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn--primary {
+  background: var(--grad-film);
+  border-color: transparent;
+  color: var(--text-on-film);
+  font-weight: 700;
+  box-shadow: var(--glow-film);
+}
+.btn--primary:hover { filter: brightness(1.08); background: var(--grad-film); }
+
+.btn--ghost { background: transparent; border-color: var(--line); }
+.btn--ghost:hover { background: var(--bg-elev); }
+
+.btn--danger { background: transparent; border-color: rgba(255,59,48,0.4); color: var(--signal); }
+.btn--danger:hover { background: rgba(255,59,48,0.12); }
+
+.btn--sm { padding: 5px 10px; font-size: 12px; }
+.btn--icon { padding: 8px; }
+.btn--block { width: 100%; }
+
+/* —— 面板（玻璃控制台） —— */
+.panel {
+  background:
+    var(--grad-panel),
+    var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+}
+.panel__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+.panel__title { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+.panel__body { padding: var(--sp-5); }
+
+/* —— 表单 —— */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--sp-4); }
+.field__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.input, .textarea, .select {
+  background: var(--bg-input);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 9px 11px;
+  width: 100%;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-color: var(--film);
+  box-shadow: 0 0 0 3px rgba(255,107,26,0.15);
+}
+.textarea { resize: vertical; min-height: 84px; line-height: 1.6; }
+.select { appearance: none; cursor: pointer; }
+
+/* —— 开关 —— */
+.toggle {
+  position: relative;
+  width: 42px; height: 24px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: 1px solid var(--line-strong);
+  transition: background 0.18s var(--ease);
+  flex: none;
+}
+.toggle[data-on="true"] { background: var(--film); border-color: transparent; }
+.toggle::after {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s var(--ease-snap);
+}
+.toggle[data-on="true"]::after { transform: translateX(18px); }
+
+/* —— 徽标 —— */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(255,107,26,0.12); color: var(--film);
+  border: 1px solid var(--line-film);
+}
+.badge--signal { background: rgba(255,59,48,0.12); color: var(--signal); border-color: rgba(255,59,48,0.35); }
+.badge--ok { background: rgba(47,210,138,0.12); color: var(--ok); border-color: rgba(47,210,138,0.35); }
+.badge--ghost { background: var(--bg-elev); color: var(--text-dim); border-color: var(--line); }
+
+/* —— 空状态 —— */
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: var(--sp-3);
+  padding: var(--sp-7) var(--sp-5);
+  color: var(--text-faint);
+}
+.empty__icon {
+  width: 64px; height: 64px; border-radius: 18px;
+  display: grid; place-items: center;
+  background: var(--bg-elev); border: 1px solid var(--line);
+  color: var(--film);
+}
+
+/* —— 模态 —— */
+.modal__overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(3,3,5,0.72);
+  backdrop-filter: blur(6px);
+  display: grid; place-items: center;
+  padding: var(--sp-5);
+  animation: fade 0.16s var(--ease);
+}
+.modal {
+  width: min(520px, 100%);
+  background: var(--bg-panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-3);
+  animation: pop 0.18s var(--ease-snap);
+}
+.modal__head { display:flex; align-items:center; justify-content:space-between; padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--line); }
+.modal__body { padding: var(--sp-5); }
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+
+/* —— 旋转 —— */
+.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* —— 通用卡片网格 —— */
+.grid { display: grid; gap: var(--sp-4); }
+.grid--cards { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }

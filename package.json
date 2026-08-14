@@ -1,0 +1,29 @@
+{
+  "name": "aimamax-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AIMAMAX Studio — 影院控制台风格的 AI 影视/漫剧导演工作台 (静态 SPA, GitHub Pages)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.3.5",
+    "html-to-image": "^1.11.11",
+    "idb": "^8.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8"
+  }
+}

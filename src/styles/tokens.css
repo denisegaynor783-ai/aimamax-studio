@@ -1,0 +1,78 @@
+/* ============================================================
+   AIMAMAX Studio — 影院控制台设计令牌 (Cinema Control Console)
+   深空黑底 + 胶片橙 / 信号红点缀 + 等宽技术字体
+   ============================================================ */
+:root {
+  /* —— 底色层级（从最深的虚空到抬升面板）—— */
+  --bg-void: #070709;
+  --bg-base: #0a0a0e;
+  --bg-panel: #0f0f15;
+  --bg-elev: #16161e;
+  --bg-input: #1b1b24;
+  --bg-hover: #20202b;
+
+  /* —— 描边 / 分隔 —— */
+  --line: rgba(255, 255, 255, 0.07);
+  --line-soft: rgba(255, 255, 255, 0.045);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --line-film: rgba(255, 107, 26, 0.35);
+
+  /* —— 文本 —— */
+  --text: #ededf2;
+  --text-dim: #9b9ba8;
+  --text-faint: #5d5d6b;
+  --text-on-film: #0a0a0e;
+
+  /* —— 品牌强调 —— */
+  --film: #ff6b1a;          /* 胶片橙：主行动 / 高亮 */
+  --film-bright: #ff8a3d;
+  --film-dim: #b94e12;
+  --signal: #ff3b30;        /* 信号红：警示 / 录制 / 危险操作 */
+  --signal-dim: #b52820;
+  --ok: #2fd28a;            /* 成功 / 在线 */
+  --warn: #ffc24b;          /* 注意 */
+  --info: #4cc2ff;          /* 信息 / 链接 */
+
+  /* —— 渐变 —— */
+  --grad-film: linear-gradient(135deg, #ff8a3d 0%, #ff6b1a 45%, #ff3b30 100%);
+  --grad-panel: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+  --glow-film: 0 0 0 1px rgba(255,107,26,0.4), 0 8px 30px -8px rgba(255,107,26,0.45);
+
+  /* —— 字体（等宽技术字体栈，离线可用）—— */
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", ui-monospace,
+    SFMono-Regular, "Menlo", "Cascadia Code", "Roboto Mono", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  /* —— 间距节奏 —— */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* —— 圆角 —— */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  /* —— 阴影 —— */
+  --sh-1: 0 1px 2px rgba(0,0,0,0.5);
+  --sh-2: 0 6px 20px -6px rgba(0,0,0,0.6);
+  --sh-3: 0 18px 50px -12px rgba(0,0,0,0.7);
+
+  /* —— 动效 —— */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* —— 布局 —— */
+  --rail-w: 76px;
+  --topbar-h: 56px;
+}
+
+/* 影院控制台：冷色主题，强制 dark */
+@media (prefers-color-scheme: light) {
+  :root { color-scheme: dark; }
+}
