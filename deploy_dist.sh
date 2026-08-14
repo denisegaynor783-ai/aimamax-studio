@@ -22,7 +22,7 @@ while IFS= read -r f; do
   first=0
   printf '{"path":"%s","mode":"100644","type":"blob","sha":"%s"}' "$rel" "$sha" >> /tmp/dist_tree.json
   count=$((count+1))
-done < <(find dist -type f | grep -v '^dist/CNAME$' | sort)
+done < <(find dist -type f | sort)
 printf ']' >> /tmp/dist_tree.json
 echo "dist 文件数: $count"
 
