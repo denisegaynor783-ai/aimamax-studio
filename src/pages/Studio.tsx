@@ -1,7 +1,7 @@
 // ============================================================
 // AIMAMAX Studio — 创作页（双模式：画布 / 3D 导演台 + 检视器）
 // ============================================================
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useStudio } from "../lib/store";
@@ -10,7 +10,12 @@ import { DirectorStage3D } from "../canvas/DirectorStage3D";
 import { Inspector } from "../canvas/Inspector";
 import { Button, EmptyState } from "../components/ui";
 import { NewProjectModal } from "../components/NewProjectModal";
-import { IconCreate, IconProjects, IconFilm, IconCube } from "../components/icons";
+import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron } from "../components/icons";
+
+// 检视器宽度约束（紧凑默认值，可手动收缩/拉伸）
+const INSPECTOR_MIN = 248;
+const INSPECTOR_MAX = 520;
+const INSPECTOR_DEFAULT = 300;
 
 export default function Studio() {
   const nav = useNavigate();
@@ -18,6 +23,9 @@ export default function Studio() {
   const { project, openProject, selectedNodeId } = useStudio();
   const [showNew, setShowNew] = useState(false);
   const [mode, setMode] = useState<"canvas" | "stage">("canvas");
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
+  const [inspectorW, setInspectorW] = useState(INSPECTOR_DEFAULT);
+  const [resizing, setResizing] = useState(false);
 
   const pid = params.get("p");
   useEffect(() => {
@@ -25,6 +33,27 @@ export default function Studio() {
       openProject(pid);
     }
   }, [pid, project?.id, openProject]);
+
+  // —— 检视器拖拽改宽（左侧手柄）——
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setResizing(true);
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.min(INSPECTOR_MAX, Math.max(INSPECTOR_MIN, window.innerWidth - ev.clientX));
+      setInspectorW(w);
+    };
+    const onUp = () => {
+      setResizing(false);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, []);
 
   if (!project) {
     return (
@@ -61,9 +90,30 @@ export default function Studio() {
         </div>
         <div className="studio-body">
           {mode === "canvas" ? <DirectorCanvas /> : <DirectorStage3D />}
-          <aside className="studio-inspector" data-open={mode === "canvas" && !!selectedNodeId}>
-            <Inspector />
-          </aside>
+
+          {mode === "canvas" && (
+            <aside
+              className="studio-inspector"
+              data-open={!!selectedNodeId}
+              data-collapsed={inspectorCollapsed}
+              data-resizing={resizing}
+              style={{ width: inspectorCollapsed ? 0 : inspectorW }}
+            >
+              <div className="inspector-resize" onMouseDown={startResize} title="拖动调整检视器宽度" />
+              <Inspector onCollapse={() => setInspectorCollapsed(true)} />
+            </aside>
+          )}
+
+          {mode === "canvas" && inspectorCollapsed && (
+            <button
+              className="inspector-reopen"
+              onClick={() => setInspectorCollapsed(false)}
+              title="展开检视器"
+              aria-label="展开检视器"
+            >
+              <IconChevron size={16} />
+            </button>
+          )}
         </div>
       </div>
     </ReactFlowProvider>

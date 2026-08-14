@@ -3,8 +3,8 @@
 // ============================================================
 import { useStudio } from "../lib/store";
 import { Button, IconButton, Field, Badge, EmptyState, Spinner } from "../components/ui";
-import { IconTrash, IconSpark, IconImage, IconVideo, IconText, IconPlus } from "../components/icons";
-import type { AssetKind, GenKind, NodeKind } from "../lib/types";
+import { IconTrash, IconSpark, IconImage, IconVideo, IconText, IconPlus, IconChevron } from "../components/icons";
+import type { AssetKind, GenKind, NodeKind, ProviderConfig } from "../lib/types";
 
 const KIND_LABEL: Record<NodeKind, string> = {
   character: "角色卡", scene: "场景卡", shot: "分镜格", asset: "素材", prompt: "生成任务", music: "音乐轨", text: "文本 / 脚本",
@@ -17,7 +17,7 @@ function assetKindOf(k: NodeKind): AssetKind {
   return "prop";
 }
 
-export function Inspector() {
+export function Inspector({ onCollapse }: { onCollapse?: () => void }) {
   const { selectedNodeId, nodes, settings, updateNodeData, updateNodePayload, generateFromNode, deleteNode, addAsset, busy, busyNodeId } =
     useStudio();
   const node = nodes.find((n) => n.id === selectedNodeId);
@@ -37,7 +37,9 @@ export function Inspector() {
   }
 
   const d = node.data;
-  const modelOpts = settings.providers.filter((p) => p.enabled || p.kind === "demo").flatMap((p) => p.models);
+  const providers = settings.providers;
+  // 选中接口（Provider）：节点显式指定优先，否则跟随默认
+  const chosenProv = providers.find((p: ProviderConfig) => p.id === d.payload.provider);
   const busyThis = busy && busyNodeId === node.id;
   const isVisual = d.kind !== "text" && d.kind !== "music";
   const isAudio = d.kind === "music";
@@ -62,9 +64,16 @@ export function Inspector() {
       <div className="inspector__head">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Badge tone="film">{KIND_LABEL[d.kind]}</Badge>
-          <IconButton title="删除节点" onClick={() => deleteNode(node.id)}>
-            <IconTrash size={16} />
-          </IconButton>
+          <div style={{ display: "flex", gap: 4 }}>
+            {onCollapse && (
+              <IconButton title="收起检视器" onClick={onCollapse}>
+                <IconChevron size={16} />
+              </IconButton>
+            )}
+            <IconButton title="删除节点" onClick={() => deleteNode(node.id)}>
+              <IconTrash size={16} />
+            </IconButton>
+          </div>
         </div>
       </div>
 
@@ -88,12 +97,66 @@ export function Inspector() {
           </Field>
         )}
 
-        <Field label="使用模型">
-          <select className="select" value={d.payload.model ?? ""} onChange={(e) => updateNodePayload(node.id, { model: e.target.value })}>
+        {/* —— 接口 (Provider) + 大模型 (Model) 全量暴露 —— */}
+        <Field label="接口 (Provider)">
+          <select
+            className="select"
+            value={d.payload.provider ?? ""}
+            onChange={(e) => {
+              // 切换接口时清空已选模型，避免模型来自不同供应商
+              updateNodePayload(node.id, { provider: e.target.value || undefined, model: undefined });
+            }}
+          >
             <option value="">（跟随默认）</option>
-            {modelOpts.map((m) => <option key={m} value={m}>{m}</option>)}
+            {providers.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+                {p.kind === "demo" ? "" : p.enabled ? "" : " · 未启用"}
+              </option>
+            ))}
           </select>
         </Field>
+
+        <Field label="大模型 (Model)">
+          <select
+            className="select"
+            value={d.payload.model ?? ""}
+            onChange={(e) => updateNodePayload(node.id, { model: e.target.value || undefined })}
+          >
+            <option value="">（跟随默认）</option>
+            {chosenProv ? (
+              // 已选具体接口：列出该接口的全部模型
+              chosenProv.models.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))
+            ) : (
+              // 未指定接口：按供应商分组列出所有模型，全部可点选
+              providers.map((p) => (
+                <optgroup key={p.id} label={p.name}>
+                  {p.models.map((m) => (
+                    <option key={p.id + "::" + m} value={m}>{m}</option>
+                  ))}
+                </optgroup>
+              ))
+            )}
+          </select>
+        </Field>
+
+        {/* 接口状态提示：地址 + 密钥 */}
+        <div className="inspector__prov-hint">
+          <span className="dot" data-ok={chosenProv ? chosenProv.kind === "demo" || !!chosenProv.apiKey : false} />
+          {chosenProv ? (
+            chosenProv.kind === "demo" ? (
+              <span>离线 Demo 引擎 · 无需密钥</span>
+            ) : chosenProv.apiKey ? (
+              <span>已配置密钥 · {chosenProv.baseUrl || "默认端点"}</span>
+            ) : (
+              <span>未配置密钥 · {chosenProv.baseUrl || "默认端点"}（将回退 Demo）</span>
+            )
+          ) : (
+            <span>未指定接口 · 将按运行模式/默认供应商选择</span>
+          )}
+        </div>
 
         {isVisual && (
           <Field label="尺寸">

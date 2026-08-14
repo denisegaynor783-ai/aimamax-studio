@@ -355,7 +355,8 @@ export const useStudio = create<StudioState>((set, get) => ({
         : kind === "video"
         ? settings.defaultVideoModel
         : settings.defaultTextModel);
-    const provider = settings.demoMode ? "demo" : firstEnabledProvider(settings);
+    // 节点显式指定接口优先；否则按运行模式 / 首个可用供应商
+    const provider = node.data.payload.provider || (settings.demoMode ? "demo" : firstEnabledProvider(settings));
     set({ busy: true, busyNodeId: id });
     const result = await runGenerate(
       { kind, prompt, model, provider, negativePrompt: node.data.payload.negativePrompt, params: node.data.payload.params },

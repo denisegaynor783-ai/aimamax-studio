@@ -133,15 +133,58 @@
 .studio-body { flex: 1; min-height: 0; display: flex; }
 .studio-layout[data-mode="stage"] .studio-inspector { display: none; }
 .studio-inspector {
-  width: 344px; flex: none; border-left: 1px solid var(--line);
+  width: 344px; flex: none; position: relative;
+  border-left: 1px solid var(--line);
   background: var(--bg-panel); height: 100%;
+  overflow: hidden;
+  transition: width 0.18s var(--ease);
 }
+.studio-inspector[data-resizing="true"] { transition: none; }
+.studio-inspector[data-collapsed="true"] { border-left: none; }
+
+/* 左侧拖拽手柄：手动调整检视器宽度 */
+.inspector-resize {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 7px;
+  cursor: col-resize; z-index: 6; background: transparent;
+  transition: background 0.15s var(--ease);
+}
+.inspector-resize::after {
+  content: ""; position: absolute; left: 3px; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 38px; border-radius: 2px; background: var(--line-strong);
+  transition: background 0.15s var(--ease);
+}
+.inspector-resize:hover,
+.studio-inspector[data-resizing="true"] .inspector-resize { background: rgba(255,107,26,0.28); }
+.inspector-resize:hover::after { background: var(--film); }
+
+/* 折叠后的展开标签页 */
+.inspector-reopen {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 54px; z-index: 6;
+  border: 1px solid var(--line); border-right: none;
+  border-radius: 9px 0 0 9px; background: var(--bg-panel);
+  color: var(--film); display: grid; place-items: center; cursor: pointer;
+  box-shadow: var(--sh-2);
+}
+.inspector-reopen:hover { background: var(--bg-hover); }
+
+/* 接口状态提示 */
+.inspector__prov-hint {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; color: var(--text-faint); margin: -6px 0 6px; line-height: 1.4;
+}
+.inspector__prov-hint .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--text-faint); }
+.inspector__prov-hint .dot[data-ok="true"] { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+
 @media (max-width: 720px) {
   .studio-inspector {
-    position: absolute; top: 0; right: 0; bottom: 0; width: 90%; z-index: 30;
+    position: absolute !important; top: 0; right: 0; bottom: 0; width: 90% !important; z-index: 30;
     transform: translateX(100%); transition: transform 0.2s var(--ease); box-shadow: var(--sh-3);
+    border-left: 1px solid var(--line) !important;
   }
   .studio-inspector[data-open="true"] { transform: none; }
+  .inspector-resize { display: none; }
+  .inspector-reopen { display: none; }
 }
 
 .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

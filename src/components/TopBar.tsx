@@ -4,7 +4,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useStudio } from "../lib/store";
 import { Button, Badge, IconButton, Spinner } from "./ui";
-import { IconSave, IconExport, IconProjects, IconFilm } from "./icons";
+import { IconSave, IconExport, IconProjects, IconFilm, IconSpark } from "./icons";
 
 const TITLES: Record<string, string> = {
   "/": "发现",
@@ -38,6 +38,10 @@ export function TopBar() {
       </div>
 
       <div className="topbar__spacer" />
+
+      <Button variant="ghost" size="sm" icon={<IconSpark size={15} />} onClick={() => nav("/login")}>
+        登入
+      </Button>
 
       {settings.demoMode && <Badge tone="signal">DEMO 模式</Badge>}
 

@@ -221,7 +221,7 @@ function AboutTab() {
     <Panel title="AIMAMAX Studio" eyebrow="ABOUT">
       <div className="set-row__desc" style={{ lineHeight: 1.8 }}>
         影院控制台风格的 AI 影视 / 漫剧导演工作台。<br />
-        架构：纯静态 SPA（Vite + React），部署于 GitHub Pages，零服务器依赖。<br />
+        架构：纯静态 SPA（Vite + React），部署于 Hostinger 静态托管（ninedeerselect.com），零服务器依赖。<br />
         数据：全部存于浏览器 IndexedDB，离线可用、刷新不丢。<br />
         AI：OpenAI 兼容 / ToAPIs / 火山方舟 抽象统一，未配密钥时自动回退 Demo 引擎。<br />
         版本：v1.0.0 · 品牌沿用 AIMAMAX（ninedeerselect.com）

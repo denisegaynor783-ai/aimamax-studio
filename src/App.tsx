@@ -2,7 +2,7 @@
 // AIMAMAX Studio — 应用根：外壳 + HashRouter 路由
 // ============================================================
 import { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useStudio } from "./lib/store";
 import { Rail, MobileNav } from "./components/shell";
 import { TopBar } from "./components/TopBar";
@@ -12,9 +12,11 @@ import Studio from "./pages/Studio";
 import Assets from "./pages/Assets";
 import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 
 export default function App() {
   const { ready, init } = useStudio();
+  const loc = useLocation();
 
   useEffect(() => {
     init();
@@ -27,6 +29,11 @@ export default function App() {
         <div className="eyebrow">AIMAMAX STUDIO 启动中</div>
       </div>
     );
+  }
+
+  // 登录页脱离外壳，全屏沉浸式
+  if (loc.pathname === "/login") {
+    return <Login />;
   }
 
   return (
