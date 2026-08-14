@@ -18,6 +18,7 @@ import {
 } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import { useStudio } from "../lib/store";
+import { useFullscreen } from "../lib/useFullscreen";
 import { StudioNode } from "./StudioNode";
 import { Button, IconButton } from "../components/ui";
 import {
@@ -65,50 +66,12 @@ export function DirectorCanvas() {
   const [addOpen, setAddOpen] = useState(false);
   const [bg, setBg] = useState<BgMode>("dots");
   const [pendingEdgeId, setPendingEdgeId] = useState<string | null>(null);
-  const [isFs, setIsFs] = useState(false);
   const shots = nodes.filter((n) => n.data.kind === "shot");
 
-  // —— 全屏工作台：优先 OS 级（覆盖整屏、隐藏外壳），被拦截则 CSS 铺满视口 ——
-  useEffect(() => {
-    const onFs = () => setIsFs(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", onFs);
-    return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
-  const refit = useCallback(() => {
-    window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300 }), 320);
-  }, [rf]);
-  const toggleFullscreen = useCallback(() => {
-    const layout = document.getElementById("studio-layout");
-    // 已处于 CSS 模拟全屏 → 退出
-    if (layout?.classList.contains("fs-fake")) {
-      layout.classList.remove("fs-fake");
-      setIsFs(false);
-      refit();
-      return;
-    }
-    // 浏览器已 OS 全屏 → 退出
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.();
-      return;
-    }
-    // 尝试 OS 级全屏：把整个 .app 根全屏（覆盖整块显示器）
-    const root = (document.querySelector(".app") as HTMLElement | null) ?? layout;
-    const req = root?.requestFullscreen?.();
-    if (req && typeof req.then === "function") {
-      req
-        .then(() => refit())
-        .catch(() => {
-          // 被拦截（iframe / 权限）→ CSS 模拟铺满视口兜底
-          layout?.classList.add("fs-fake");
-          setIsFs(true);
-          refit();
-        });
-    } else {
-      layout?.classList.add("fs-fake");
-      setIsFs(true);
-      refit();
-    }
-  }, [refit]);
+  // —— 全屏工作台（OS 级覆盖整屏 + CSS 兜底），进入后重新适配视图 ——
+  const { isFs, toggle } = useFullscreen(() =>
+    window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300 }), 320)
+  );
 
   // —— 自动存稿（防丢） ——
   useEffect(() => {
@@ -254,7 +217,7 @@ export function DirectorCanvas() {
         <IconButton title="保存并截图" onClick={snapAndSave}>
           <IconSave size={16} />
         </IconButton>
-        <IconButton title={isFs ? "退出全屏（Esc）" : "全屏工作台（沉浸创作 · 工具齐全）"} onClick={toggleFullscreen}>
+        <IconButton title={isFs ? "退出全屏（Esc）" : "全屏工作台（沉浸创作 · 工具齐全）"} onClick={toggle}>
           {isFs ? <IconFullscreenExit size={16} /> : <IconExpand size={16} />}
         </IconButton>
 

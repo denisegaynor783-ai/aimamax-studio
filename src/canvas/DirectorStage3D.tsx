@@ -14,6 +14,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, TransformControls, Grid } from "@react-three/drei";
 import * as THREE from "three";
 import { useStudio } from "../lib/store";
+import { useFullscreen } from "../lib/useFullscreen";
 import type { StageObject, Vec3 } from "../lib/types";
 import { Button, IconButton, EmptyState } from "../components/ui";
 import {
@@ -25,6 +26,8 @@ import {
   IconTrash,
   IconImage,
   IconSave,
+  IconExpand,
+  IconFullscreenExit,
 } from "../components/icons";
 
 // —— WebGL 失败兜底 ——
@@ -350,6 +353,8 @@ export function DirectorStage3D() {
   } = useStudio();
   const apiRef = useRef<StageApi | null>(null);
   const [mode, setMode] = useState<"translate" | "rotate" | "scale">("translate");
+  // —— 全屏工作台（与画布共用：OS 级覆盖整屏 + CSS 兜底）——
+  const { isFs, toggle } = useFullscreen();
 
   const register = useCallback((api: StageApi) => {
     apiRef.current = api;
@@ -406,6 +411,9 @@ export function DirectorStage3D() {
           </Button>
           <div className="flow-toolbar__div" />
           <IconButton title="重置视角" onClick={resetView}><IconFilm size={16} /></IconButton>
+          <IconButton title={isFs ? "退出全屏（Esc）" : "全屏工作台（沉浸创作 · 工具齐全）"} onClick={toggle}>
+            {isFs ? <IconFullscreenExit size={16} /> : <IconExpand size={16} />}
+          </IconButton>
           <div className="stage-toolbar__count">{stageObjects.length} 个对象 · {stageShots.length} 个镜头</div>
         </div>
         <div className="stage-canvas-wrap">
