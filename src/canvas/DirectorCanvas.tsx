@@ -68,23 +68,47 @@ export function DirectorCanvas() {
   const [isFs, setIsFs] = useState(false);
   const shots = nodes.filter((n) => n.data.kind === "shot");
 
-  // —— 全屏工作台（含工具栏 / 检视器 / 缩略图条）——
+  // —— 全屏工作台：优先 OS 级（覆盖整屏、隐藏外壳），被拦截则 CSS 铺满视口 ——
   useEffect(() => {
     const onFs = () => setIsFs(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
+  const refit = useCallback(() => {
+    window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300 }), 320);
+  }, [rf]);
   const toggleFullscreen = useCallback(() => {
-    const el = document.getElementById("studio-layout");
-    if (!el) return;
+    const layout = document.getElementById("studio-layout");
+    // 已处于 CSS 模拟全屏 → 退出
+    if (layout?.classList.contains("fs-fake")) {
+      layout.classList.remove("fs-fake");
+      setIsFs(false);
+      refit();
+      return;
+    }
+    // 浏览器已 OS 全屏 → 退出
     if (document.fullscreenElement) {
       document.exitFullscreen?.();
-    } else {
-      el.requestFullscreen?.().then(() => {
-        window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300 }), 350);
-      }).catch(() => {});
+      return;
     }
-  }, [rf]);
+    // 尝试 OS 级全屏：把整个 .app 根全屏（覆盖整块显示器）
+    const root = (document.querySelector(".app") as HTMLElement | null) ?? layout;
+    const req = root?.requestFullscreen?.();
+    if (req && typeof req.then === "function") {
+      req
+        .then(() => refit())
+        .catch(() => {
+          // 被拦截（iframe / 权限）→ CSS 模拟铺满视口兜底
+          layout?.classList.add("fs-fake");
+          setIsFs(true);
+          refit();
+        });
+    } else {
+      layout?.classList.add("fs-fake");
+      setIsFs(true);
+      refit();
+    }
+  }, [refit]);
 
   // —— 自动存稿（防丢） ——
   useEffect(() => {

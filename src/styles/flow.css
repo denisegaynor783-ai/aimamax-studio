@@ -222,15 +222,36 @@
 .seg--sm button[data-active="true"].rel-audio { background: #3ddc84; color: #0a0a0e; }
 
 /* —— 全屏工作台 —— */
-.studio-layout:fullscreen {
+/* OS 级全屏：把整个 .app 根全屏，隐藏外壳，工作台干净铺满整屏 */
+.app:fullscreen {
+  position: relative;
+  width: 100vw; height: 100vh;
   background: var(--bg-void);
   outline: none;
-  width: 100vw; height: 100vh;
+  overflow: hidden;
 }
-.studio-layout:fullscreen .flow-toolbar {
-  background: rgba(15,15,21,0.92);
+.app:fullscreen .rail,
+.app:fullscreen .topbar,
+.app:fullscreen .mobilenav {
+  display: none !important;
 }
-.studio-layout:fullscreen .studio-modebar {
+.app:fullscreen .studio-layout {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-void);
+}
+.app:fullscreen .studio-modebar,
+.app:fullscreen .flow-toolbar {
   background: rgba(15,15,21,0.92);
   backdrop-filter: blur(8px);
+}
+
+/* CSS 模拟全屏兜底（iframe / 权限阻止 OS 全屏时，铺满整个视口） */
+.studio-layout.fs-fake {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  width: 100vw; height: 100vh;
+  background: var(--bg-void);
+  outline: none;
 }
