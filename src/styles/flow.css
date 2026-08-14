@@ -149,3 +149,74 @@
 .result-card img, .result-card video { width: 100%; display: block; aspect-ratio: 1; object-fit: cover; }
 .result-card__txt { font-size: 11px; padding: 8px; max-height: 120px; overflow: auto; color: var(--text-dim); white-space: pre-wrap; }
 .result-card__bar { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
+
+/* —— 语义流动连线 —— */
+@keyframes edgeflow { to { stroke-dashoffset: -28; } }
+.react-flow__edge.rel-sequence .react-flow__edge-path {
+  stroke-dasharray: 9 7; animation: edgeflow 0.9s linear infinite;
+}
+.react-flow__edge.rel-reference .react-flow__edge-path { stroke-dasharray: 5 4; }
+.react-flow__edge.rel-audio .react-flow__edge-path { stroke-dasharray: 2 5; }
+
+/* —— 节点类型色彩条 —— */
+.snode[data-kind="character"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #ff6b1a; }
+.snode[data-kind="scene"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #4cc2ff; }
+.snode[data-kind="shot"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #ffc24b; }
+.snode[data-kind="asset"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #b98bff; }
+.snode[data-kind="prompt"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #ff6b1a; }
+.snode[data-kind="music"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #3ddc84; }
+.snode[data-kind="text"] { box-shadow: var(--sh-2), inset 3px 0 0 0 #9aa0b5; }
+.snode[data-selected="true"] { box-shadow: var(--glow-film), inset 3px 0 0 0 rgba(255,255,255,0.25); }
+
+/* 节点状态点 */
+.snode__status { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--text-faint); }
+.snode__status[data-status="done"] { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.snode__status[data-status="busy"] { background: var(--film); box-shadow: 0 0 8px var(--film); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* 悬停操作条 */
+.snode__actions {
+  position: absolute; top: 6px; right: 6px; z-index: 4;
+  display: none; gap: 4px;
+}
+.snode:hover .snode__actions { display: flex; }
+.snode__actions button {
+  width: 22px; height: 22px; display: grid; place-items: center;
+  background: rgba(10,10,14,0.82); border: 1px solid var(--line-strong); border-radius: 6px;
+  color: var(--text-dim); cursor: pointer;
+}
+.snode__actions button:hover { color: var(--film); border-color: var(--film); }
+
+/* 节点底部「智能分镜」 */
+.snode__story {
+  display: flex; align-items: center; justify-content: center; gap: 5px; width: calc(100% - 22px);
+  margin: 0 11px 9px; padding: 6px; font-size: 12px; font-weight: 600;
+  background: rgba(255,107,26,0.10); border: 1px solid rgba(255,107,26,0.32);
+  color: var(--film); border-radius: var(--r-sm); cursor: pointer;
+}
+.snode__story:hover { background: rgba(255,107,26,0.18); }
+
+/* 画布统计 chip */
+.flow-stat { font-size: 12px; color: var(--text-dim); padding: 4px 8px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--r-sm); white-space: nowrap; }
+
+/* 连线关系选择器 */
+.edge-rel-pop {
+  position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 12;
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(15,15,21,0.96); backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+  padding: 8px 10px; box-shadow: var(--sh-3);
+}
+.edge-rel-pop__title { font-size: 12px; color: var(--text-dim); padding-left: 2px; }
+.edge-rel-pop__x { background: transparent; border: none; color: var(--text-dim); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.edge-rel-pop__x:hover { color: var(--signal); }
+
+/* 小号分段控件 */
+.seg--sm { gap: 0; padding: 3px; }
+.seg--sm button { padding: 5px 12px; font-size: 12px; }
+.rel-sequence { color: #ff6b1a; }
+.rel-reference { color: #4cc2ff; }
+.rel-audio { color: #3ddc84; }
+.seg--sm button[data-active="true"].rel-sequence { background: #ff6b1a; color: #0a0a0e; }
+.seg--sm button[data-active="true"].rel-reference { background: #4cc2ff; color: #0a0a0e; }
+.seg--sm button[data-active="true"].rel-audio { background: #3ddc84; color: #0a0a0e; }

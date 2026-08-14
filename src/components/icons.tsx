@@ -174,3 +174,39 @@ export const IconCube = (p: P) => (
     <path d="M12 3v18M4 7.5l8 4.5 8-4.5" />
   </S>
 );
+export const IconLayout = (p: P) => (
+  <S {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18M9 9v12" />
+  </S>
+);
+export const IconDuplicate = (p: P) => (
+  <S {...p}>
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M5 15V5a2 2 0 012-2h8" />
+  </S>
+);
+export const IconGrid = (p: P) => (
+  <S {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+  </S>
+);
+export const IconExpand = (p: P) => (
+  <S {...p}>
+    <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+  </S>
+);
+export const IconLayers = (p: P) => (
+  <S {...p}>
+    <path d="M12 3l9 5-9 5-9-5 9-5z" />
+    <path d="M3 13l9 5 9-5" />
+  </S>
+);
+export const IconLink2 = (p: P) => (
+  <S {...p}>
+    <circle cx="6" cy="6" r="2.5" />
+    <circle cx="18" cy="18" r="2.5" />
+    <path d="M8.5 6H15a3 3 0 013 3v6.5" />
+  </S>
+);

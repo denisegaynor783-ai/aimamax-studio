@@ -21,6 +21,7 @@ import type {
   StudioNode,
   StudioNodeData,
   NodeKind,
+  EdgeRel,
   StageObject,
   StageShot,
   StageObjectType,
@@ -90,8 +91,12 @@ interface StudioState {
   // 画布
   onNodesChange: (c: NodeChange[]) => void;
   onEdgesChange: (c: EdgeChange[]) => void;
-  onConnect: (c: Connection) => void;
+  onConnect: (c: Connection) => string;
+  setEdgeRel: (id: string, rel: EdgeRel) => void;
   addNode: (kind: NodeKind, position: { x: number; y: number }) => string;
+  duplicateNode: (id: string) => string | null;
+  storyboardFromText: (nodeId: string) => number;
+  applyLayout: (positions: Record<string, { x: number; y: number }>) => void;
   updateNodeData: (id: string, patch: Partial<StudioNodeData>) => void;
   updateNodePayload: (id: string, patch: Record<string, unknown>) => void;
   deleteNode: (id: string) => void;
@@ -224,13 +229,25 @@ export const useStudio = create<StudioState>((set, get) => ({
 
   onNodesChange: (c) => set({ nodes: applyNodeChanges(c, get().nodes) as StudioNode[] }),
   onEdgesChange: (c) => set({ edges: applyEdgeChanges(c, get().edges) as StudioEdge[] }),
-  onConnect: (c) =>
+  onConnect: (c) => {
+    const id = `e-${db.uid()}`;
     set({
       edges: addEdge(
-        { ...c, id: `e-${db.uid()}`, data: { rel: "sequence" }, className: "rel-sequence", style: { stroke: "#ff6b1a" } },
+        { ...c, id, data: { rel: "sequence" }, className: "rel-sequence", style: { stroke: "#ff6b1a" } },
         get().edges
       ) as StudioEdge[],
-    }),
+    });
+    return id;
+  },
+
+  setEdgeRel: (id, rel) => {
+    const stroke = rel === "sequence" ? "#ff6b1a" : rel === "reference" ? "#4cc2ff" : "#3ddc84";
+    set({
+      edges: get().edges.map((e) =>
+        e.id === id ? { ...e, data: { ...(e.data ?? {}), rel }, className: `rel-${rel}`, style: { stroke } } : e
+      ),
+    });
+  },
 
   addNode: (kind, position) => {
     const id = db.uid();
@@ -266,6 +283,61 @@ export const useStudio = create<StudioState>((set, get) => ({
       nodes: get().nodes.filter((n) => n.id !== id),
       edges: get().edges.filter((e) => e.source !== id && e.target !== id),
       selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
+    });
+  },
+
+  duplicateNode: (id) => {
+    const n = get().nodes.find((x) => x.id === id);
+    if (!n) return null;
+    const copy: StudioNode = {
+      ...n,
+      id: db.uid(),
+      position: { x: n.position.x + 44, y: n.position.y + 44 },
+      data: { ...n.data, payload: { ...n.data.payload, results: [] } },
+    };
+    set({ nodes: [...get().nodes, copy], selectedNodeId: copy.id });
+    return copy.id;
+  },
+
+  /** 文本节点离线智能分镜：按换行拆句 → 生成时序分镜节点链（不消耗 API） */
+  storyboardFromText: (nodeId) => {
+    const node = get().nodes.find((x) => x.id === nodeId);
+    if (!node) return 0;
+    const text = node.data.payload.note || node.data.payload.prompt || "";
+    const lines = text
+      .split(/\r?\n/)
+      .map((s) => s.replace(/^[\s\d.、)）\-—]+/, "").trim())
+      .filter(Boolean)
+      .slice(0, 24);
+    if (lines.length === 0) return 0;
+    const baseX = node.position.x;
+    const baseY = node.position.y + 180;
+    const created: StudioNode[] = lines.map((line, i) => ({
+      id: db.uid(),
+      type: "studio",
+      position: { x: baseX + (i % 2) * 280, y: baseY + Math.floor(i / 2) * 160 },
+      data: { kind: "shot", label: `分镜 ${i + 1}`, payload: { prompt: line, results: [], note: "" } },
+    }));
+    const mkEdge = (s: string, t: string, rel: EdgeRel): StudioEdge => ({
+      id: `e-${db.uid()}`,
+      source: s,
+      target: t,
+      data: { rel },
+      className: `rel-${rel}`,
+      style: { stroke: rel === "sequence" ? "#ff6b1a" : rel === "reference" ? "#4cc2ff" : "#3ddc84" },
+    });
+    const newEdges: StudioEdge[] = [];
+    if (created.length) {
+      newEdges.push(mkEdge(node.id, created[0].id, "reference"));
+      for (let i = 1; i < created.length; i++) newEdges.push(mkEdge(created[i - 1].id, created[i].id, "sequence"));
+    }
+    set({ nodes: [...get().nodes, ...created], edges: [...get().edges, ...newEdges], selectedNodeId: null });
+    return created.length;
+  },
+
+  applyLayout: (positions) => {
+    set({
+      nodes: get().nodes.map((n) => (positions[n.id] ? { ...n, position: positions[n.id] } : n)),
     });
   },
 
@@ -411,6 +483,11 @@ export const useStudio = create<StudioState>((set, get) => ({
 function firstEnabledProvider(s: AppSettings): string {
   const p = s.providers.find((x) => x.enabled && x.kind !== "demo" && x.apiKey);
   return p?.id ?? "demo";
+}
+
+// 仅开发态暴露状态，便于自动化冒烟（生产构建不挂载）
+if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV && typeof window !== "undefined") {
+  (window as unknown as { __studio: typeof useStudio }).__studio = useStudio;
 }
 
 /** 把舞台对象描述成镜头提示词（供 AI 关键帧生成） */

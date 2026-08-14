@@ -1,8 +1,8 @@
 // ============================================================
 // AIMAMAX Studio — 导演台画布（React Flow 无限画布）
-// 工具栏 / 添加节点 / 适应视图 / 截图保存 / 自动存稿
+// 多维增强：语义流动连线(关系选择器) · 一键拓扑智能排版 · 网格切换 · 节点统计HUD · 截图画布 · 自动存稿
 // ============================================================
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -14,15 +14,17 @@ import {
   getViewportForBounds,
   type Node,
   type Edge,
+  type Connection,
 } from "@xyflow/react";
 import { toPng } from "html-to-image";
 import { useStudio } from "../lib/store";
 import { StudioNode } from "./StudioNode";
 import { Button, IconButton } from "../components/ui";
 import {
-  IconPlus, IconCharacter, IconScene, IconImage, IconText, IconMusic, IconSave, IconFilm,
+  IconPlus, IconCharacter, IconScene, IconImage, IconText, IconMusic, IconSave, IconExpand,
+  IconLayout, IconGrid,
 } from "../components/icons";
-import type { NodeKind } from "../lib/types";
+import type { NodeKind, EdgeRel as EdgeRelType } from "../lib/types";
 
 const nodeTypes = { studio: StudioNode };
 
@@ -35,11 +37,34 @@ const ADD_KINDS: { kind: NodeKind; label: string; icon: (p: { size?: number }) =
   { kind: "music", label: "音乐轨", icon: IconMusic },
 ];
 
+const REL_META: Record<EdgeRelType, { label: string; cls: string }> = {
+  sequence: { label: "时序", cls: "rel-sequence" },
+  reference: { label: "引用", cls: "rel-reference" },
+  audio: { label: "音频", cls: "rel-audio" },
+};
+
+const KIND_COLOR: Record<string, string> = {
+  character: "#ff6b1a",
+  scene: "#4cc2ff",
+  shot: "#ffc24b",
+  asset: "#b98bff",
+  prompt: "#ff6b1a",
+  music: "#3ddc84",
+  text: "#9aa0b5",
+};
+
+type BgMode = "dots" | "lines" | "none";
+
 export function DirectorCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, saveCurrent, project } = useStudio();
+  const {
+    nodes, edges, onNodesChange, onEdgesChange, onConnect, setEdgeRel, addNode, saveCurrent, project,
+    applyLayout,
+  } = useStudio();
   const rf = useReactFlow();
   const [addOpen, setAddOpen] = useState(false);
+  const [bg, setBg] = useState<BgMode>("dots");
+  const [pendingEdgeId, setPendingEdgeId] = useState<string | null>(null);
   const shots = nodes.filter((n) => n.data.kind === "shot");
 
   // —— 自动存稿（防丢） ——
@@ -61,6 +86,59 @@ export function DirectorCanvas() {
     },
     [rf, addNode]
   );
+
+  // —— 连线：创建后弹出关系选择器 ——
+  const handleConnect = useCallback(
+    (c: Connection) => {
+      const id = onConnect(c);
+      setPendingEdgeId(id);
+    },
+    [onConnect]
+  );
+
+  // —— 一键拓扑智能排版（按时序边分层，左→右；其余附后） ——
+  const autoLayout = useCallback(() => {
+    if (nodes.length === 0) return;
+    const seq = edges.filter((e) => (e.data?.rel ?? "sequence") === "sequence");
+    const adj = new Map<string, string[]>();
+    const indeg = new Map<string, number>();
+    nodes.forEach((n) => { adj.set(n.id, []); indeg.set(n.id, 0); });
+    seq.forEach((e) => {
+      if (adj.has(e.source) && indeg.has(e.target)) {
+        adj.get(e.source)!.push(e.target);
+        indeg.set(e.target, (indeg.get(e.target) ?? 0) + 1);
+      }
+    });
+    const layers: string[][] = [];
+    const visited = new Set<string>();
+    let frontier = nodes.filter((n) => (indeg.get(n.id) ?? 0) === 0).map((n) => n.id);
+    while (frontier.length) {
+      layers.push(frontier);
+      const next: string[] = [];
+      frontier.forEach((id) => {
+        (adj.get(id) ?? []).forEach((t) => {
+          if (visited.has(t)) return;
+          indeg.set(t, (indeg.get(t) ?? 1) - 1);
+          if ((indeg.get(t) ?? 0) <= 0 && !next.includes(t)) next.push(t);
+        });
+        visited.add(id);
+      });
+      frontier = next.filter((id) => !visited.has(id));
+    }
+    const unvisited = nodes.map((n) => n.id).filter((id) => !visited.has(id));
+    if (unvisited.length) layers.push(unvisited);
+
+    const COL_W = 300;
+    const ROW_H = 172;
+    const pos: Record<string, { x: number; y: number }> = {};
+    layers.forEach((layer, li) => {
+      layer.forEach((id, ri) => {
+        pos[id] = { x: li * COL_W, y: ri * ROW_H };
+      });
+    });
+    applyLayout(pos);
+    window.setTimeout(() => rf.fitView({ padding: 0.18, duration: 520 }), 60);
+  }, [nodes, edges, applyLayout, rf]);
 
   // —— 截图保存缩略图 ——
   const snapAndSave = useCallback(async () => {
@@ -87,6 +165,14 @@ export function DirectorCanvas() {
     }
   }, [rf, saveCurrent]);
 
+  // —— 待选关系的连线当前 rel ——
+  const pendingRel = useMemo(() => {
+    if (!pendingEdgeId) return null;
+    return (edges.find((e) => e.id === pendingEdgeId)?.data?.rel ?? "sequence") as EdgeRelType;
+  }, [pendingEdgeId, edges]);
+
+  const bgVariant = bg === "dots" ? BackgroundVariant.Dots : bg === "lines" ? BackgroundVariant.Lines : null;
+
   return (
     <div ref={wrapRef} style={{ flex: 1, minHeight: 0, position: "relative" }}>
       {/* 工具条 */}
@@ -109,13 +195,46 @@ export function DirectorCanvas() {
           )}
         </div>
         <div className="flow-toolbar__div" />
+
+        <IconButton title="一键智能排版（按时序分层）" onClick={autoLayout}>
+          <IconLayout size={16} />
+        </IconButton>
+        <IconButton
+          title={bg === "dots" ? "网格：点（点此切换为线）" : bg === "lines" ? "网格：线（点此关闭）" : "网格：关（点此开启）"}
+          onClick={() => setBg((b) => (b === "dots" ? "lines" : b === "lines" ? "none" : "dots"))}
+        >
+          <IconGrid size={16} />
+        </IconButton>
         <IconButton title="适应视图" onClick={() => rf.fitView({ padding: 0.2, duration: 400 })}>
-          <IconFilm size={16} />
+          <IconExpand size={16} />
         </IconButton>
         <IconButton title="保存并截图" onClick={snapAndSave}>
           <IconSave size={16} />
         </IconButton>
+
+        <div className="flow-toolbar__div" />
+        <span className="flow-stat" title="画布节点总数">{nodes.length} 节点</span>
       </div>
+
+      {/* 连线关系选择器 */}
+      {pendingEdgeId && pendingRel && (
+        <div className="edge-rel-pop">
+          <span className="edge-rel-pop__title">连线关系</span>
+          <div className="seg seg--sm">
+            {(Object.keys(REL_META) as EdgeRelType[]).map((rel) => (
+              <button
+                key={rel}
+                data-active={pendingRel === rel}
+                className={REL_META[rel].cls}
+                onClick={() => { setEdgeRel(pendingEdgeId, rel); setPendingEdgeId(null); }}
+              >
+                {REL_META[rel].label}
+              </button>
+            ))}
+          </div>
+          <button className="edge-rel-pop__x" onClick={() => setPendingEdgeId(null)} title="关闭">×</button>
+        </div>
+      )}
 
       <ReactFlow
         nodes={nodes as Node[]}
@@ -123,27 +242,26 @@ export function DirectorCanvas() {
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
+        onEdgeClick={(_, e) => setPendingEdgeId(e.id)}
         onNodeClick={(_, n) => useStudio.getState().selectNode(n.id)}
-        onPaneClick={() => useStudio.getState().selectNode(null)}
+        onPaneClick={() => { useStudio.getState().selectNode(null); setPendingEdgeId(null); }}
+        deleteKeyCode={["Backspace", "Delete"]}
         fitView
         minZoom={0.15}
         maxZoom={2.5}
         defaultEdgeOptions={{ type: "default" }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="rgba(255,255,255,0.07)" />
+        {bgVariant !== null && (
+          <Background variant={bgVariant} gap={bg === "lines" ? 32 : 28} size={bg === "lines" ? 1 : 1} color={bg === "lines" ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.07)"} />
+        )}
         <Controls showInteractive={false} />
         <MiniMap
           pannable
           zoomable
-          nodeColor={(n) => {
-            const k = (n.data as { kind?: string })?.kind;
-            if (k === "character") return "#ff6b1a";
-            if (k === "scene") return "#4cc2ff";
-            if (k === "shot") return "#ffc24b";
-            return "#2a2a34";
-          }}
+          nodeColor={(n) => KIND_COLOR[(n.data as { kind?: string })?.kind ?? ""] ?? "#2a2a34"}
+          nodeStrokeColor={(n) => KIND_COLOR[(n.data as { kind?: string })?.kind ?? ""] ?? "#2a2a34"}
           maskColor="rgba(7,7,9,0.7)"
         />
       </ReactFlow>
