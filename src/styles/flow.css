@@ -201,6 +201,44 @@
 
 .studio-layout { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
 .studio-modebar { height: 40px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--bg-panel); }
+.studio-modebtn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; padding: 5px 10px; border-radius: var(--r-md);
+  border: 1px solid var(--line); background: transparent; color: var(--text-dim); cursor: pointer;
+  transition: all .15s var(--ease); margin-left: auto;
+}
+.studio-modebtn:hover { color: var(--text); border-color: var(--film); }
+
+/* —— 多抽选优弹窗 —— */
+.bg-modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 80; padding: 20px; }
+.batchgen { width: min(880px, 96vw); max-height: 90vh; overflow: auto; background: var(--bg-panel); border: 1px solid var(--line-strong); border-radius: var(--r-xl); padding: 18px; box-shadow: var(--sh-3); }
+.batchgen__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.batchgen__title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+.batchgen__title svg { color: var(--film); }
+.batchgen__x { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 18px; }
+.batchgen__ctrl { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.batchgen__label { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+.batchgen__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.batchgen__count { display: flex; gap: 4px; }
+.batchgen__cnt { width: 32px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--text); cursor: pointer; }
+.batchgen__cnt[data-active="true"] { background: var(--film); border-color: var(--film); color: #fff; }
+.batchgen__hint { font-size: 11px; color: var(--text-dim); }
+.batchgen__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.batchgen__cell { border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--bg-deep); display: flex; flex-direction: column; }
+.batchgen__cell[data-ok="false"] { opacity: .6; }
+.batchgen__thumb { position: relative; aspect-ratio: 1 / 1; background: #000; }
+.batchgen__thumb img, .batchgen__thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.batchgen__idx { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 999px; }
+.batchgen__err { height: 100%; display: grid; place-items: center; text-align: center; font-size: 11px; color: var(--text-dim); padding: 10px; }
+.batchgen__meta { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.batchgen__stars { display: flex; gap: 2px; }
+.batchgen__star { background: transparent; border: none; font-size: 16px; line-height: 1; color: var(--line-strong); cursor: pointer; padding: 0; }
+.batchgen__star[data-on="true"] { color: var(--warn); }
+.batchgen__sub { font-size: 11px; color: var(--text-dim); }
+.batchgen__rate { color: var(--warn); font-style: normal; }
+.batchgen__pick { font-size: 12px; padding: 6px; border-radius: 8px; border: 1px solid var(--film); background: var(--film); color: #fff; cursor: pointer; }
+.batchgen__pick:disabled { opacity: .4; cursor: not-allowed; background: transparent; color: var(--text-dim); border-color: var(--line); }
+.batchgen__foot { margin-top: 12px; font-size: 12px; color: var(--text-dim); }
 .studio-body { flex: 1; min-height: 0; display: flex; }
 .studio-layout[data-mode="stage"] .studio-inspector { display: none; }
 .studio-inspector {

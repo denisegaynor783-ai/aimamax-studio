@@ -10,6 +10,10 @@
 //   GET  /api/pay/query                查询订单状态
 //   POST /api/v1/generate              统一生成代理（文本/图像/视频 → ToAPIs）
 //   GET  /api/v1/models                模型目录（ToAPIs 全模型）
+//   GET  /api/v1/agents                专业 Agent 目录（脱敏：不含 system）
+//   POST /api/v1/agent                 运行某 Agent（{agent, prompt, model?} → ToAPIs chat + 人设）
+//   GET  /api/v1/characters            角色库目录（预设 + 自定义）
+//   POST /api/v1/characters            创建自定义角色
 // 鉴权：默认 ALLOW_ANON=1（演示/开发允许匿名）；生产设 0 强制登录。
 // ============================================================
 const http = require("http");
@@ -19,6 +23,8 @@ const { signUser, verifyToken } = require("./lib/jwt");
 const store = require("./lib/store");
 const { demoGenerate } = require("./lib/demo");
 const { chat, image, video, catalog } = require("./lib/toapis");
+const { AGENTS, getAgent, demoAgent } = require("./lib/agents");
+const { PRESET_CHARACTERS, listCharacters } = require("./lib/characters");
 
 const PORT = process.env.PORT || 3000;
 
@@ -112,6 +118,85 @@ async function handleModels(req, res) {
     }
   }
   sendJson(res, 200, { provider: "toapis", base: TOAPIS_BASE, demo: DEMO_MODE, models });
+}
+
+async function handleAgents(req, res) {
+  const list = AGENTS.map((a) => ({ id: a.id, name: a.name, category: a.category, icon: a.icon, tagline: a.tagline }));
+  sendJson(res, 200, { agents: list, count: list.length });
+}
+
+async function handleAgent(req, res) {
+  const body = await readBody(req);
+  const { agent: agentId, prompt, model } = body;
+  const agent = getAgent(agentId);
+  if (!agent) return sendJson(res, 404, { error: "agent not found: " + agentId });
+  if (!prompt) return sendJson(res, 400, { error: "prompt required" });
+
+  if (DEMO_MODE || !TOAPIS_KEY) {
+    return sendJson(res, 200, {
+      ok: true,
+      agent: agentId,
+      name: agent.name,
+      text: demoAgent(agent, prompt),
+      model: agent.defaultModel,
+      demo: true,
+    });
+  }
+  try {
+    const text = await chat(model || agent.defaultModel, prompt, agent.system, agent.temperature);
+    return sendJson(res, 200, {
+      ok: true,
+      agent: agentId,
+      name: agent.name,
+      text,
+      model: model || agent.defaultModel,
+      demo: false,
+    });
+  } catch (e) {
+    return sendJson(res, 200, {
+      ok: true,
+      agent: agentId,
+      name: agent.name,
+      text: demoAgent(agent, prompt),
+      model: agent.defaultModel,
+      demo: true,
+      error: "toapis_failed: " + e.message,
+    });
+  }
+}
+
+// —— 角色库 ——
+async function handleCharactersList(req, res) {
+  const user = getUser(req);
+  if (!user) return sendJson(res, 401, { error: "unauthorized" });
+  const chars = listCharacters(store);
+  const safe = chars.map((c) => ({
+    id: c.id, name: c.name, tags: c.tags,
+    description: c.description,
+    promptTemplate: c.promptTemplate || null,
+    custom: !!c.custom,
+  }));
+  sendJson(res, 200, { characters: safe, total: safe.length });
+}
+
+async function handleCharactersCreate(req, res) {
+  const user = getUser(req);
+  if (!user) return sendJson(res, 401, { error: "unauthorized" });
+  const body = await readBody(req);
+  const data = typeof body === "string" ? JSON.parse(body || "{}") : body;
+  const ch = {
+    id: "char-custom-" + Date.now().toString(36),
+    name: String(data.name || "自定义角色").slice(0, 60),
+    tags: data.tags || {},
+    description: String(data.description || "").slice(0, 500),
+    promptTemplate: data.promptTemplate ? String(data.promptTemplate).slice(0, 500) : null,
+    custom: true,
+    createdAt: Date.now(),
+  };
+  const customs = store.get("characters") || [];
+  customs.push(ch);
+  store.set("characters", customs);
+  sendJson(res, 201, { character: ch });
 }
 
 function handleWechatLogin(req, res, q) {
@@ -234,6 +319,27 @@ const server = http.createServer(async (req, res) => {
       const user = getUser(req);
       if (!user) return sendJson(res, 401, { error: "unauthorized" });
       return handleModels(req, res);
+    }
+
+    if (p === "/api/v1/agents" && req.method === "GET") {
+      const user = getUser(req);
+      if (!user) return sendJson(res, 401, { error: "unauthorized" });
+      return handleAgents(req, res);
+    }
+    if (p === "/api/v1/agent" && req.method === "POST") {
+      const user = getUser(req);
+      if (!user) return sendJson(res, 401, { error: "unauthorized" });
+      return handleAgent(req, res);
+    }
+    if (p === "/api/v1/characters" && req.method === "GET") {
+      const user = getUser(req);
+      if (!user) return sendJson(res, 401, { error: "unauthorized" });
+      return handleCharactersList(req, res, store);
+    }
+    if (p === "/api/v1/characters" && req.method === "POST") {
+      const user = getUser(req);
+      if (!user) return sendJson(res, 401, { error: "unauthorized" });
+      return handleCharactersCreate(req, res, store);
     }
 
     sendJson(res, 404, { error: "not_found", path: p });

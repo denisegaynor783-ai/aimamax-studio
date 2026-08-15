@@ -9,6 +9,8 @@ import {
   IconProjects,
   IconSettings,
   IconFilm,
+  IconSpark,
+  IconCharacter,
 } from "./icons";
 
 interface NavDef {
@@ -19,6 +21,8 @@ interface NavDef {
 const NAV: NavDef[] = [
   { to: "/", label: "发现", icon: IconDiscover },
   { to: "/studio", label: "创作", icon: IconCreate },
+  { to: "/agents", label: "Agent", icon: IconSpark },
+  { to: "/characters", label: "角色库", icon: IconCharacter },
   { to: "/assets", label: "资产", icon: IconAssets },
   { to: "/projects", label: "项目", icon: IconProjects },
   { to: "/settings", label: "设置", icon: IconSettings },

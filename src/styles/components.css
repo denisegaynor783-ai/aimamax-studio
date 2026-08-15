@@ -145,7 +145,7 @@
   animation: fade 0.16s var(--ease);
 }
 .modal {
-  width: min(520px, 100%);
+  width: min(420px, 92vw);
   background: var(--bg-panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-xl);
@@ -153,7 +153,7 @@
   animation: pop 0.18s var(--ease-snap);
 }
 .modal__head { display:flex; align-items:center; justify-content:space-between; padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--line); }
-.modal__body { padding: var(--sp-5); }
+.modal__body { padding: var(--sp-4) var(--sp-4); }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } }

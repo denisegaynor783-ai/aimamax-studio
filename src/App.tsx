@@ -13,6 +13,8 @@ import Assets from "./pages/Assets";
 import Projects from "./pages/Projects";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
+import Agents from "./pages/Agents";
+import Characters from "./pages/Characters";
 
 export default function App() {
   const { ready, init } = useStudio();
@@ -46,6 +48,8 @@ export default function App() {
           <Route path="/studio" element={<Studio />} />
           <Route path="/assets" element={<Assets />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/agents" element={<Agents />} />
+          <Route path="/characters" element={<Characters />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Discover />} />
         </Routes>

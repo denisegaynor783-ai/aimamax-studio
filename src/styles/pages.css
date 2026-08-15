@@ -46,6 +46,10 @@
   cursor: pointer;
   overflow: hidden;
 }
+.tpl-card--compact { padding: var(--sp-3) var(--sp-3); }
+.tpl-card--compact .tpl-card__icon { width: 34px; height: 34px; border-radius: 10px; margin-bottom: var(--sp-2); }
+.tpl-card--compact h3 { font-size: 13px; }
+.tpl-card--compact p { font-size: 11px; }
 .tpl-card:hover { border-color: var(--line-film); transform: translateY(-3px); box-shadow: var(--sh-2); }
 .tpl-card__icon {
   width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;

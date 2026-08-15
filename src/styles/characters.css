@@ -1,0 +1,183 @@
+/* ===== 角色库 Character Library（匹配 Characters.tsx） ===== */
+.char-lib {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-deep);
+  color: var(--text);
+  overflow: hidden;
+}
+.char-lib__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.char-lib__head h2 {
+  font-size: 16px; margin: 0; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 7px;
+}
+.char-lib__head .spacer { flex: 1; }
+.char-lib__close {
+  background: var(--bg-panel); border: 1px solid var(--line);
+  border-radius: 8px; color: var(--text-dim);
+  width: 32px; height: 32px; cursor: pointer;
+}
+.char-lib__close:hover { color: var(--text); border-color: var(--film); }
+.char-lib__divider { height: 1px; background: var(--line); }
+
+/* 角色详情 */
+.char-detail { padding: 16px 18px; overflow-y: auto; }
+.char-detail--empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--text-dim); gap: 10px; min-height: 220px;
+}
+.char-detail__header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.char-detail__name { font-size: 19px; margin: 0; }
+.char-detail__tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.char-detail__desc {
+  font-size: 13px; color: var(--text-dim); line-height: 1.65; margin: 14px 0;
+}
+.char-detail__actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* 标签 chip */
+.char-tag {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px;
+  border: 1px solid var(--line); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.char-tag__x {
+  background: none; border: none; color: inherit; cursor: pointer;
+  font-size: 13px; line-height: 1; padding: 0; opacity: 0.6;
+}
+.char-tag__x:hover { opacity: 1; }
+/* 底部浏览区 */
+.char-browser {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  border-top: 1px solid var(--line);
+}
+.char-browser__bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 18px; border-bottom: 1px solid var(--line);
+}
+.select--sm {
+  background: var(--bg-panel); border: 1px solid var(--line);
+  color: var(--text); border-radius: 8px; padding: 6px 10px; font-size: 12px;
+}
+.char-browser__recent {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-dim); cursor: pointer;
+}
+.char-browser__list {
+  flex: 1; overflow-x: auto; overflow-y: hidden;
+  display: flex; gap: 12px; padding: 14px 18px;
+  scroll-snap-type: x mandatory;
+}
+.char-browser__empty { color: var(--text-dim); font-size: 13px; padding: 20px; }
+
+/* 角色卡片 */
+.char-card {
+  flex-shrink: 0; width: 104px; scroll-snap-align: start;
+  background: var(--bg-panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 8px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 7px; transition: all 0.15s;
+}
+.char-card:hover { border-color: var(--film); transform: translateY(-3px); }
+.char-card--active { border-color: var(--film); box-shadow: 0 0 0 2px var(--film); }
+.char-card__img {
+  width: 100%; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden;
+  background: var(--bg-deep); display: flex; align-items: center; justify-content: center;
+}
+.char-card__img img { width: 100%; height: 100%; object-fit: cover; }
+.char-card__avatar { color: var(--text-dim); }
+.char-card__name {
+  font-size: 12px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Toast */
+.char-toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: var(--film); color: #fff; padding: 9px 18px; border-radius: 10px;
+  font-size: 13px; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+/* 多角度参考图画廊 */
+.char-gallery {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1.4fr 1fr;
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+.char-gallery__slot {
+  border-radius: 12px; overflow: hidden; background: var(--bg-panel);
+  border: 1px solid var(--line);
+}
+.char-gallery__slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.char-gallery__slot--body { grid-row: 1 / span 2; }
+.char-gallery__slot--portrait { grid-column: 2; grid-row: 1; }
+.char-gallery__slot--grid { grid-column: 2; grid-row: 2; }
+.char-gallery__slot--side,
+.char-gallery__slot--expr { display: none; }
+
+/* 占位态 */
+.char-gallery--placeholder .char-gallery__placeholder {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  color: var(--text-dim); font-size: 11px;
+}
+.char-gallery__grid3 {
+  width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 3px; padding: 5px;
+}
+.char-gallery__grid-cell {
+  background: var(--bg-deep); border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; color: var(--text-dim);
+}
+.char-gallery__side-views { display: flex; height: 100%; }
+.char-gallery__side-cell {
+  flex: 1; background: var(--bg-deep); margin: 2px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; color: var(--text-dim);
+}
+.char-gallery__expr-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 5px; height: 100%;
+}
+.char-gallery__expr-cell {
+  background: var(--bg-deep); border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; color: var(--text-dim);
+}
+
+@media (max-width: 720px) {
+  .char-gallery { grid-template-columns: 1fr 1fr; }
+  .char-gallery__slot--body { grid-row: auto; }
+}
+
+/* —— 状态拆资产 / GEO 锚点 / 锚点说明 —— */
+.char-states { margin-top: 12px; }
+.char-states__label, .char-geo__label {
+  font-size: 11px; color: var(--text-dim); letter-spacing: .04em; margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.char-states__tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.char-state-tab {
+  font-size: 12px; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--text-dim); cursor: pointer;
+  transition: all .15s var(--ease);
+}
+.char-state-tab:hover { color: var(--text); border-color: var(--film); }
+.char-state-tab[data-active="true"] {
+  background: var(--film); border-color: var(--film); color: #fff;
+}
+.char-geo { margin-top: 12px; }
+.char-geo__text {
+  margin: 0; padding: 10px 12px; border: 1px dashed color-mix(in srgb, var(--film) 40%, transparent);
+  border-radius: var(--r-md); background: rgba(168,85,247,.06);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.6;
+  white-space: pre-wrap; color: var(--text);
+}
+.char-note {
+  margin-top: 10px; padding: 8px 12px; border-radius: var(--r-md);
+  background: rgba(34,211,238,.07); border: 1px solid color-mix(in srgb, var(--info) 35%, transparent);
+  font-size: 12px; color: var(--text-dim);
+}

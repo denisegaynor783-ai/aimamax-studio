@@ -9,6 +9,8 @@ import { IconSave, IconExport, IconProjects, IconFilm, IconSpark } from "./icons
 const TITLES: Record<string, string> = {
   "/": "发现",
   "/studio": "创作",
+  "/agents": "Agent 中心",
+  "/characters": "角色库",
   "/assets": "资产库",
   "/projects": "我的项目",
   "/settings": "设置",

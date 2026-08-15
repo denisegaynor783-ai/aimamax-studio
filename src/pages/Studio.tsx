@@ -10,9 +10,11 @@ import { DirectorStage3D } from "../canvas/DirectorStage3D";
 import { Inspector } from "../canvas/Inspector";
 import { NodeActionMenu } from "../canvas/NodeActionMenu";
 import { FrameStripDialog } from "../canvas/FrameStripDialog";
+import BatchGen from "../canvas/BatchGen";
 import { Button, EmptyState } from "../components/ui";
 import { NewProjectModal } from "../components/NewProjectModal";
-import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron } from "../components/icons";
+import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron, IconDuplicate } from "../components/icons";
+import type { GenResult } from "../lib/types";
 
 // 检视器宽度约束（紧凑默认值，可手动收缩/拉伸）
 const INSPECTOR_MIN = 224;
@@ -22,7 +24,7 @@ const INSPECTOR_DEFAULT = 264;
 export default function Studio() {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const { project, openProject, selectedNodeId, nodes, studioMode, setStudioMode } = useStudio();
+  const { project, openProject, selectedNodeId, nodes, studioMode, setStudioMode, addNode, updateNodePayload } = useStudio();
   const [showNew, setShowNew] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorW, setInspectorW] = useState(INSPECTOR_DEFAULT);
@@ -34,6 +36,22 @@ export default function Studio() {
   const openFrameStrip = useCallback((origin: { x: number; y: number }, sourceId: string | null) => {
     setFrameStrip({ open: true, origin, sourceId });
   }, []);
+
+  // —— 多抽选优（一镜多抽 N 次 · 评分选优）——
+  const [batchOpen, setBatchOpen] = useState(false);
+  const batchInitial = selectedNodeId
+    ? (nodes.find((n) => n.id === selectedNodeId)?.data.payload?.prompt || "")
+    : "";
+  const pickFromBatch = useCallback((r: GenResult) => {
+    const sel = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : undefined;
+    if (sel && sel.data.kind === "generator") {
+      const results = (sel.data.payload?.results ?? []) as GenResult[];
+      updateNodePayload(sel.id, { results: [...results, r] });
+    } else {
+      const id = addNode("generator", { x: 140 + Math.random() * 220, y: 140 + Math.random() * 160 });
+      updateNodePayload(id, { prompt: batchInitial, results: [r], label: "批量优选" });
+    }
+  }, [selectedNodeId, nodes, addNode, updateNodePayload, batchInitial]);
 
   const pid = params.get("p");
   useEffect(() => {
@@ -121,6 +139,9 @@ export default function Studio() {
             </button>
           </div>
           <span className="muted" style={{ fontSize: 12 }}>{project.name}</span>
+          <button className="studio-modebtn" title="一镜多抽 N 次，评分选优（参考 Hell Grind 抽卡工作流）" onClick={() => setBatchOpen(true)}>
+            <IconDuplicate size={14} /> 多抽选优
+          </button>
         </div>
         <div className="studio-body">
           {canvasArea}
@@ -161,6 +182,15 @@ export default function Studio() {
             onClose={() => setFrameStrip({ open: false, origin: { x: 0, y: 0 }, sourceId: null })}
           />
         )}
+
+        {/* 多抽选优对话框 */}
+        <BatchGen
+          open={batchOpen}
+          initialPrompt={batchInitial}
+          kind="image"
+          onClose={() => setBatchOpen(false)}
+          onPick={pickFromBatch}
+        />
       </div>
     </ReactFlowProvider>
   );

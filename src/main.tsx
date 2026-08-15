@@ -10,6 +10,8 @@ import "@xyflow/react/dist/style.css";
 import "./styles/flow.css";
 import "./styles/stage.css";
 import "./styles/login.css";
+import "./styles/agents.css";
+import "./styles/characters.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

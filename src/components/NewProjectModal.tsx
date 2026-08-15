@@ -30,19 +30,19 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="新建导演项目" onClose={onClose}>
-      <div className="grid grid--cards" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", marginBottom: 18 }}>
+      <div className="grid grid--cards" style={{ gridTemplateColumns: "repeat(2,1fr)", gap: 10, marginBottom: 14 }}>
         {KINDS.map((k) => {
           const Icon = k.icon;
           return (
             <button
               key={k.kind}
-              className="tpl-card"
+              className="tpl-card tpl-card--compact"
               data-active={kind === k.kind}
               onClick={() => setKind(k.kind)}
               style={kind === k.kind ? { borderColor: "var(--film)", boxShadow: "var(--glow-film)" } : undefined}
             >
-              <div className="tpl-card__icon"><Icon size={22} /></div>
-              <h3 style={{ fontSize: 13 }}>{k.label}</h3>
+              <div className="tpl-card__icon"><Icon size={18} /></div>
+              <h3>{k.label}</h3>
               <p>{k.desc}</p>
             </button>
           );

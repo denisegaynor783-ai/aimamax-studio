@@ -4,17 +4,17 @@ const { TOAPIS_BASE, TOAPIS_KEY } = require("./config");
 
 const SYS = "你是 AIMAMAX 导演台的 AI 编剧/分镜/视觉助手，输出专业、可直接用于影视/漫剧制作的内容。";
 
-async function chat(model, prompt) {
+async function chat(model, prompt, system, temperature) {
   const r = await fetch(`${TOAPIS_BASE}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOAPIS_KEY}` },
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: SYS },
+        { role: "system", content: system || SYS },
         { role: "user", content: prompt },
       ],
-      temperature: 0.8,
+      temperature: typeof temperature === "number" ? temperature : 0.8,
     }),
   });
   if (!r.ok) throw new Error(`chat HTTP ${r.status}`);

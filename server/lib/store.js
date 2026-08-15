@@ -49,4 +49,13 @@ function updateOrder(id, patch) {
   persist();
 }
 
-module.exports = { upsertUser, getUser, getCredits, addCredits, createOrder, getOrder, updateOrder };
+// 通用键值存取（自定义角色等扩展数据，存于 db 顶层）
+function get(key) {
+  return db[key];
+}
+function set(key, val) {
+  db[key] = val;
+  persist();
+}
+
+module.exports = { upsertUser, getUser, getCredits, addCredits, createOrder, getOrder, updateOrder, get, set };
