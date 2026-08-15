@@ -569,12 +569,41 @@
 .asset-card__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .asset-card__kind { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; color: var(--info); background: color-mix(in srgb, var(--info) 16%, transparent); padding: 1px 7px; border-radius: 999px; }
 .timeline-track { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
-.timeline-shot { flex: none; width: 132px; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; color: var(--text); cursor: pointer; text-align: left; transition: border-color 0.15s, transform 0.1s; }
+.timeline-shot { position: relative; flex: none; width: 132px; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; color: var(--text); cursor: pointer; text-align: left; transition: border-color 0.15s, transform 0.1s; }
 .timeline-shot:hover { border-color: var(--film); transform: translateY(-2px); }
+.timeline-shot[data-dragging="true"] { opacity: 0.4; }
+.timeline-shot[data-over="true"] { border-color: var(--film); box-shadow: 0 0 0 2px rgba(255,107,26,0.4); }
 .timeline-shot__idx { font-size: 11px; font-weight: 700; color: var(--film); }
+.timeline-shot__grip { position: absolute; top: 6px; right: 8px; font-size: 13px; color: var(--text-faint); cursor: grab; line-height: 1; user-select: none; }
+.timeline-shot__grip:active { cursor: grabbing; }
 .timeline-shot__thumb { width: 100%; height: 74px; border-radius: 7px; overflow: hidden; display: grid; place-items: center; background: var(--bg-sunken); color: var(--text-dim); }
 .timeline-shot__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .timeline-shot__label { font-size: 11px; color: var(--text-dim); }
+.canvas-panel__hint { font-size: 11.5px; color: var(--text-faint); line-height: 1.6; padding: 0 2px 4px; }
+
+/* 面板内小按钮（导出 / 重置 / 清空） */
+.panel-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg-elev); color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: border-color 0.12s, color 0.12s; }
+.panel-btn:hover:not(:disabled) { color: var(--film); border-color: var(--film); }
+.panel-btn:disabled { opacity: 0.4; cursor: default; }
+.panel-btn--danger:hover:not(:disabled) { color: var(--signal); border-color: var(--signal); }
+
+/* —— 逐帧拉片对话框 —— */
+.frame-dialog-overlay { position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(7,7,9,0.55); backdrop-filter: blur(2px); }
+.frame-dialog { width: 540px; max-width: 92%; max-height: 84%; background: var(--bg-panel); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: 0 24px 70px rgba(0,0,0,0.55); display: flex; flex-direction: column; overflow: hidden; animation: nodeMenuIn 0.18s var(--ease); }
+.frame-dialog__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 13px; }
+.frame-dialog__head svg { vertical-align: -2px; margin-right: 2px; }
+.frame-dialog__body { padding: 14px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.frame-dialog__foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 14px; border-top: 1px solid var(--line); }
+.frame-file { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--bg-elev); color: var(--text); font-size: 13px; cursor: pointer; transition: border-color 0.12s, color 0.12s; }
+.frame-file:hover { border-color: var(--film); color: var(--film); }
+.frame-file--ghost { border-style: solid; color: var(--text-dim); }
+.frame-file--ghost:hover { color: var(--film); }
+.frame-note { font-size: 12px; color: var(--text-faint); line-height: 1.6; }
+.frame-note--warn { color: var(--warn); }
+.frame-previews { display: flex; gap: 10px; }
+.frame-prev { position: relative; flex: 1; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--bg-sunken); aspect-ratio: 16/9; display: grid; place-items: center; }
+.frame-prev img { width: 100%; height: 100%; object-fit: cover; }
+.frame-prev__tag { position: absolute; bottom: 4px; left: 4px; font-size: 10px; font-weight: 700; color: #0a0a0e; background: rgba(255,194,75,0.9); padding: 1px 6px; border-radius: 4px; }
 
 /* —— 分组节点 minimap 配色 —— */
 .react-flow__minimap-node[data-kind="group"] { fill: #ffc24b; }

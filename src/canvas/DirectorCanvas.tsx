@@ -27,7 +27,7 @@ import {
   IconFullscreenExit, IconLayout, IconGrid, IconAssetLib, IconTimeline,
 } from "../components/icons";
 import { NodeActionMenu } from "./NodeActionMenu";
-import { AssetPanel, TimelinePanel } from "./CanvasPanels";
+import { AssetPanel, TimelinePanel, orderedShots } from "./CanvasPanels";
 import { NODE_PALETTE, ACTION_ITEMS, QUICK_GEN } from "./palette";
 import type { NodeKind, EdgeRel as EdgeRelType } from "../lib/types";
 
@@ -54,11 +54,11 @@ const KIND_COLOR: Record<string, string> = {
 
 type BgMode = "dots" | "lines" | "none";
 
-export function DirectorCanvas() {
+export function DirectorCanvas({ onFrameStrip }: { onFrameStrip: (origin: { x: number; y: number }, sourceId: string | null) => void }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const {
-    nodes, edges, onNodesChange, onEdgesChange, onConnect, setEdgeRel, addNode, saveCurrent, project,
-    applyLayout, past, future, generateFromNode,
+    nodes, edges,     onNodesChange, onEdgesChange, onConnect, setEdgeRel, addNode, saveCurrent, project,
+    applyLayout, past, future, generateFromNode, timelineOrder: order,
   } = useStudio();
   const rf = useReactFlow();
   const [addOpen, setAddOpen] = useState(false);
@@ -68,7 +68,7 @@ export function DirectorCanvas() {
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; nodeId: string | null } | null>(null);
   // —— 画布级面板（资产管理 / 分镜时间线），消除底栏空 stub ——
   const [panel, setPanel] = useState<"asset" | "timeline" | null>(null);
-  const shots = nodes.filter((n) => n.data.kind === "shot");
+  const shots = useMemo(() => orderedShots(nodes, edges, order), [nodes, edges, order]);
 
   // —— 全屏工作台（OS 级覆盖整屏 + CSS 兜底），进入后重新适配视图 ——
   const { isFs, toggle } = useFullscreen(() =>
@@ -241,15 +241,8 @@ export function DirectorCanvas() {
                     if (a.key === "smartClip") { const id = addAtCenter("shot"); if (id) generateFromNode(id, "video"); }
                     else if (a.key === "director") useStudio.getState().setStudioMode("stage");
                     else if (a.key === "frameStrip") {
-                      // 逐帧拉片需要已知节点位置，从工具条调用时在中心派生
-                      const cx = rf.getViewport().x, cy = rf.getViewport().y;
-                      let prevId: string | null = null;
-                      for (let i = 0; i < 3; i++) {
-                        const id = addNode("shot", { x: cx + 200 + i * 300, y: cy + i * 8 });
-                        if (prevId) useStudio.getState().connectRel(prevId, id, "sequence");
-                        prevId = id;
-                        if (id) useStudio.getState().updateNodePayload(id, { note: `帧 ${i + 1}` });
-                      }
+                      // 逐帧拉片：打开抽取对话框（在画布中心派生 3 个分镜格）
+                      onFrameStrip(centerFlowPos(), null);
                     }
                     setAddOpen(false);
                   }}>
@@ -425,6 +418,7 @@ export function DirectorCanvas() {
             nodeId={ctxMenu.nodeId ?? ""}
             position={{ x: 0, y: 0 }}
             screenPos={ctxMenu}
+            onFrameStrip={onFrameStrip}
           />
           <button
             className="ctx-close"

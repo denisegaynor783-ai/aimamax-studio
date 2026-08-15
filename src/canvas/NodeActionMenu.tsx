@@ -50,7 +50,7 @@ function Badge({ tone = "ghost", children }: { tone?: string; children: React.Re
 }
 
 /* ── 主组件 ── */
-export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string; position: { x: number; y: number }; screenPos?: { x: number; y: number } }) {
+export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { nodeId: string; position: { x: number; y: number }; screenPos?: { x: number; y: number }; onFrameStrip: (origin: { x: number; y: number }, sourceId: string | null) => void }) {
   const rf = useReactFlow();
   const { addNode, generateFromNode, nodes, assets, genHistory, connectRel } = useStudio();
   const node = nodes.find((n) => n.id === nodeId);
@@ -62,6 +62,7 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
   const [subTop, setSubTop] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // 选中节点正下方偏右生成新节点（返回新建 id）
@@ -102,20 +103,14 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     useStudio.getState().setStudioMode("stage");
   }, []);
 
-  // 逐帧拉片：派生 3 个并排分镜格
+  // 逐帧拉片：打开抽取对话框（在源节点右侧派生 3 个分镜格）
   const frameStrip = useCallback(() => {
-    if (!node) return;
-    const baseX = node.position.x + 260;
-    const baseY = node.position.y;
-    let prevId: string | null = null;
-    for (let i = 0; i < 3; i++) {
-      const id = addNode("shot", { x: baseX + i * 300, y: baseY + i * 8 });
-      if (prevId) connectRel(prevId, id, "sequence");
-      else connectRel(node.id, id, "reference");
-      useStudio.getState().updateNodePayload(id, { note: `帧 ${i + 1}` });
-      prevId = id;
+    if (!node) {
+      if (screenPos) onFrameStrip(rf.screenToFlowPosition({ x: screenPos.x, y: screenPos.y }), null);
+      return;
     }
-  }, [node, addNode, connectRel]);
+    onFrameStrip({ x: node.position.x + 260, y: node.position.y }, node.id);
+  }, [node, screenPos, rf, onFrameStrip]);
 
   // 动作项分发
   const dispatchAction = useCallback((key: string) => {
@@ -343,8 +338,21 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
           onClick={(e) => e.stopPropagation()}
         >
           <div className="node-action-submenu__head">
-            生成历史
-            <button className="node-action-submenu__x" onClick={closeSub}>×</button>
+            <span>生成历史{genHistory.length > 0 && <span style={{ opacity: 0.55, marginLeft: 4 }}>（{genHistory.length}）</span>}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {genHistory.length > 0 &&
+                (confirmClear ? (
+                  <>
+                    <button className="panel-btn panel-btn--danger" onClick={() => { useStudio.getState().clearGenHistory(); setConfirmClear(false); }}>确认清空</button>
+                    <button className="panel-btn" onClick={() => setConfirmClear(false)}>取消</button>
+                  </>
+                ) : (
+                  <button className="panel-btn panel-btn--danger" title="清空全部生成历史" onClick={() => setConfirmClear(true)}>
+                    <IconTrash size={12} /> 清空
+                  </button>
+                ))}
+              <button className="node-action-submenu__x" onClick={closeSub}>×</button>
+            </div>
           </div>
           {genHistory.length === 0 && <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-faint)" }}>暂无生成记录，先对节点执行「出图 / 出视频」</div>}
           {[...genHistory].reverse().map((h) => (

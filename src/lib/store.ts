@@ -89,6 +89,8 @@ interface StudioState {
   clipboard: { id: string; data: StudioNodeData; position: { x: number; y: number } }[];
   // 生成历史（跨会话，复用 AI 生成结果）
   genHistory: GenHistoryItem[];
+  // 分镜时间线手动排序（拖拽重排后写入；缺省为空=按连线时序拓扑排序）
+  timelineOrder: string[];
 
   // 初始化
   init: () => Promise<void>;
@@ -137,6 +139,8 @@ interface StudioState {
   // 生成历史记录 / 清空
   recordGenHistory: (item: GenHistoryItem) => void;
   clearGenHistory: () => void;
+  // 分镜时间线排序（手动拖拽重排）
+  setTimelineOrder: (order: string[]) => void;
   // 3D 导演台
   addStageObject: (type: StageObjectType) => string;
   updateStageObject: (id: string, patch: Partial<StageObject>) => void;
@@ -175,6 +179,7 @@ export const useStudio = create<StudioState>((set, get) => ({
   selectedNodeId: null,
   assets: [],
   genHistory: [],
+  timelineOrder: [],
   busy: false,
   busyNodeId: null,
   stageObjects: [],
@@ -233,13 +238,14 @@ export const useStudio = create<StudioState>((set, get) => ({
       edges: p.doc.edges ?? [],
       selectedNodeId: null,
       genHistory: p.generationHistory ?? [],
+      timelineOrder: p.doc.timelineOrder ?? [],
       stageObjects: p.stage?.objects ?? [],
       stageShots: p.stage?.shots ?? [],
       selectedStageId: null,
     });
   },
 
-  closeProject: () => set({ project: null, nodes: [], edges: [], selectedNodeId: null, genHistory: [] }),
+  closeProject: () => set({ project: null, nodes: [], edges: [], selectedNodeId: null, genHistory: [], timelineOrder: [] }),
 
   renameCurrent: async (name) => {
     const p = get().project;
@@ -261,7 +267,7 @@ export const useStudio = create<StudioState>((set, get) => ({
     if (!p) return;
     const next: Project = {
       ...p,
-      doc: { nodes: get().nodes, edges: get().edges, viewport: p.doc.viewport },
+      doc: { nodes: get().nodes, edges: get().edges, viewport: p.doc.viewport, timelineOrder: get().timelineOrder },
       thumb: thumb ?? p.thumb,
       stage: { objects: get().stageObjects, shots: get().stageShots },
     };
@@ -634,6 +640,11 @@ export const useStudio = create<StudioState>((set, get) => ({
       set({ project: next });
       void db.saveProject(next);
     }
+  },
+
+  setTimelineOrder: (order) => {
+    set({ timelineOrder: order });
+    void get().saveCurrent();
   },
 
   generateFromNode: async (id, kind, modelOverride) => {

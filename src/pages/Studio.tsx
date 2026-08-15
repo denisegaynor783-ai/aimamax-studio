@@ -9,6 +9,7 @@ import { DirectorCanvas } from "../canvas/DirectorCanvas";
 import { DirectorStage3D } from "../canvas/DirectorStage3D";
 import { Inspector } from "../canvas/Inspector";
 import { NodeActionMenu } from "../canvas/NodeActionMenu";
+import { FrameStripDialog } from "../canvas/FrameStripDialog";
 import { Button, EmptyState } from "../components/ui";
 import { NewProjectModal } from "../components/NewProjectModal";
 import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron } from "../components/icons";
@@ -26,6 +27,13 @@ export default function Studio() {
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorW, setInspectorW] = useState(INSPECTOR_DEFAULT);
   const [resizing, setResizing] = useState(false);
+  // 逐帧拉片对话框（源位置 + 引用节点），公共于浮动菜单与画布右键菜单
+  const [frameStrip, setFrameStrip] = useState<{ open: boolean; origin: { x: number; y: number }; sourceId: string | null }>({
+    open: false, origin: { x: 0, y: 0 }, sourceId: null,
+  });
+  const openFrameStrip = useCallback((origin: { x: number; y: number }, sourceId: string | null) => {
+    setFrameStrip({ open: true, origin, sourceId });
+  }, []);
 
   const pid = params.get("p");
   useEffect(() => {
@@ -37,9 +45,9 @@ export default function Studio() {
   // —— 浮动菜单：检视器隐藏时，根据选中节点位置渲染 ——
   const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : undefined;
   const floatingMenu = studioMode === "canvas" && inspectorCollapsed && selectedNode && selectedNodeId
-    ? <NodeActionMenu nodeId={selectedNodeId} position={selectedNode.position} />
+    ? <NodeActionMenu nodeId={selectedNodeId} position={selectedNode.position} onFrameStrip={openFrameStrip} />
     : null;
-  const canvasArea = studioMode === "canvas" ? <DirectorCanvas /> : <DirectorStage3D />;
+  const canvasArea = studioMode === "canvas" ? <DirectorCanvas onFrameStrip={openFrameStrip} /> : <DirectorStage3D />;
 
   // —— 检视器拖拽改宽（左侧手柄）——
   const startResize = useCallback((e: React.MouseEvent) => {
@@ -144,6 +152,15 @@ export default function Studio() {
             </button>
           )}
         </div>
+
+        {/* 逐帧拉片对话框（真实抽取视频帧 → 派生 3 个分镜格） */}
+        {frameStrip.open && (
+          <FrameStripDialog
+            origin={frameStrip.origin}
+            sourceId={frameStrip.sourceId}
+            onClose={() => setFrameStrip({ open: false, origin: { x: 0, y: 0 }, sourceId: null })}
+          />
+        )}
       </div>
     </ReactFlowProvider>
   );

@@ -25,6 +25,8 @@ export interface CanvasDoc {
   nodes: StudioNode[];
   edges: StudioEdge[];
   viewport: Viewport;
+  /** 分镜时间线手动排序（拖拽重排后写入；缺省按连线时序拓扑排序） */
+  timelineOrder?: string[];
 }
 
 export interface Project extends ProjectMeta {
