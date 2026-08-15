@@ -31,6 +31,8 @@ export interface Project extends ProjectMeta {
   doc: CanvasDoc;
   /** 3D 导演台舞台数据（previz / 镜头时间线） */
   stage?: StageDoc;
+  /** AI 生成历史（跨会话可追溯，供「从生成历史选择」复用结果） */
+  generationHistory?: GenHistoryItem[];
 }
 
 // —— 3D 导演台 ——
@@ -166,6 +168,20 @@ export interface GenResult {
   model?: string;
   provider?: string;
   error?: string;
+  createdAt: number;
+}
+
+// —— 生成历史（每次 AI 生成成功的记录，供「从生成历史选择」复用） ——
+export interface GenHistoryItem {
+  id: string;
+  nodeId: string;
+  nodeLabel: string;
+  kind: GenKind;
+  model: string;
+  provider: string;
+  prompt: string;
+  /** 图片/视频 URL（成功时） */
+  url: string;
   createdAt: number;
 }
 

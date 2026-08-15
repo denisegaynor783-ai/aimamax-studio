@@ -16,6 +16,7 @@ import type {
   Asset,
   GenKind,
   GenStatus,
+  GenHistoryItem,
   Project,
   ProjectKind,
   StudioEdge,
@@ -86,6 +87,8 @@ interface StudioState {
   past: { nodes: StudioNode[]; edges: StudioEdge[] }[];
   future: { nodes: StudioNode[]; edges: StudioEdge[] }[];
   clipboard: { id: string; data: StudioNodeData; position: { x: number; y: number } }[];
+  // 生成历史（跨会话，复用 AI 生成结果）
+  genHistory: GenHistoryItem[];
 
   // 初始化
   init: () => Promise<void>;
@@ -104,6 +107,7 @@ interface StudioState {
   onEdgesChange: (c: EdgeChange[]) => void;
   onConnect: (c: Connection) => string;
   setEdgeRel: (id: string, rel: EdgeRel) => void;
+  connectRel: (source: string, target: string, rel: EdgeRel) => string;
   addNode: (kind: NodeKind, position: { x: number; y: number }) => string;
   duplicateNode: (id: string) => string | null;
   storyboardFromText: (nodeId: string) => number;
@@ -130,6 +134,9 @@ interface StudioState {
   // 连通性链式动作：结果→素材 / 素材→下游生成器
   resultToAssetNode: (id: string) => string | null;
   assetToGenerator: (id: string) => string | null;
+  // 生成历史记录 / 清空
+  recordGenHistory: (item: GenHistoryItem) => void;
+  clearGenHistory: () => void;
   // 3D 导演台
   addStageObject: (type: StageObjectType) => string;
   updateStageObject: (id: string, patch: Partial<StageObject>) => void;
@@ -167,6 +174,7 @@ export const useStudio = create<StudioState>((set, get) => ({
   edges: [],
   selectedNodeId: null,
   assets: [],
+  genHistory: [],
   busy: false,
   busyNodeId: null,
   stageObjects: [],
@@ -224,13 +232,14 @@ export const useStudio = create<StudioState>((set, get) => ({
       nodes: p.doc.nodes ?? [],
       edges: p.doc.edges ?? [],
       selectedNodeId: null,
+      genHistory: p.generationHistory ?? [],
       stageObjects: p.stage?.objects ?? [],
       stageShots: p.stage?.shots ?? [],
       selectedStageId: null,
     });
   },
 
-  closeProject: () => set({ project: null, nodes: [], edges: [], selectedNodeId: null }),
+  closeProject: () => set({ project: null, nodes: [], edges: [], selectedNodeId: null, genHistory: [] }),
 
   renameCurrent: async (name) => {
     const p = get().project;
@@ -308,6 +317,19 @@ export const useStudio = create<StudioState>((set, get) => ({
         e.id === id ? { ...e, data: { ...(e.data ?? {}), rel }, className: `rel-${rel}`, style: { stroke } } : e
       ),
     });
+  },
+
+  // 程序化派生连线：带语义 rel（reference=引用派生 / sequence=时序 / audio=音频），不污染 undo 栈
+  connectRel: (source, target, rel) => {
+    const id = `e-${db.uid()}`;
+    const stroke = rel === "sequence" ? "#ff6b1a" : rel === "reference" ? "#4cc2ff" : "#3ddc84";
+    set({
+      edges: addEdge(
+        { id, source, target, sourceHandle: null, targetHandle: null, data: { rel }, className: `rel-${rel}`, style: { stroke } },
+        get().edges
+      ) as StudioEdge[],
+    });
+    return id;
   },
 
   addNode: (kind, position) => {
@@ -593,6 +615,27 @@ export const useStudio = create<StudioState>((set, get) => ({
     return id;
   },
 
+  recordGenHistory: (item) => {
+    const list = [...get().genHistory, item];
+    set({ genHistory: list });
+    const project = get().project;
+    if (project) {
+      const next = { ...project, generationHistory: [...(project.generationHistory ?? []), item] };
+      set({ project: next });
+      void db.saveProject(next);
+    }
+  },
+
+  clearGenHistory: () => {
+    set({ genHistory: [] });
+    const project = get().project;
+    if (project) {
+      const next = { ...project, generationHistory: [] };
+      set({ project: next });
+      void db.saveProject(next);
+    }
+  },
+
   generateFromNode: async (id, kind, modelOverride) => {
     const node = get().nodes.find((n) => n.id === id);
     if (!node) return;
@@ -620,6 +663,19 @@ export const useStudio = create<StudioState>((set, get) => ({
     const results = [...(node.data.payload.results ?? []), result];
     get().updateNodePayload(id, { results });
     set({ busy: false, busyNodeId: null });
+    if (result.status === "success" && result.url) {
+      get().recordGenHistory({
+        id: db.uid(),
+        nodeId: id,
+        nodeLabel: node.data.label,
+        kind,
+        model: result.model || model,
+        provider: result.provider || provider,
+        prompt: userPrompt,
+        url: result.url,
+        createdAt: result.createdAt || Date.now(),
+      });
+    }
   },
 
   /** 结果 → 素材节点：把某节点的生成结果落成一个可复用的素材节点（reference 连线） */
@@ -757,6 +813,19 @@ export const useStudio = create<StudioState>((set, get) => ({
           : s
       ),
     });
+    if (result.status === "success" && result.url) {
+      get().recordGenHistory({
+        id: db.uid(),
+        nodeId: shotId,
+        nodeLabel: shot.name,
+        kind: "image",
+        model,
+        provider,
+        prompt,
+        url: result.url,
+        createdAt: Date.now(),
+      });
+    }
     get().saveCurrent();
   },
 

@@ -49,13 +49,13 @@ function Badge({ tone = "ghost", children }: { tone?: string; children: React.Re
 /* ── 主组件 ── */
 export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string; position: { x: number; y: number }; screenPos?: { x: number; y: number } }) {
   const rf = useReactFlow();
-  const { addNode, generateFromNode, nodes, assets, onConnect } = useStudio();
+  const { addNode, generateFromNode, nodes, assets, genHistory, connectRel } = useStudio();
   const node = nodes.find((n) => n.id === nodeId);
   const isGroup = node?.data.kind === "group";
   const hasResult = !!node && (node.data.payload.results ?? []).some((r) => r.status === "success" && r.url);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const [openSub, setOpenSub] = useState<"script" | "asset" | null>(null);
+  const [openSub, setOpenSub] = useState<"script" | "asset" | "history" | null>(null);
   const [subTop, setSubTop] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
@@ -91,33 +91,34 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     (gen: "image" | "video") => {
       const id = addNear("shot");
       if (!id) return;
-      if (node) {
-        onConnect({ source: node.id, target: id, sourceHandle: null, targetHandle: null });
-      }
+      if (node) connectRel(node.id, id, "reference");
       generateFromNode(id, gen);
     },
-    [addNear, node, onConnect, generateFromNode]
+    [addNear, node, connectRel, generateFromNode]
   );
 
   // 智能剪辑：在当前节点下游新建分镜格并出视频（剪辑成可生成的镜头）
   const smartClip = useCallback(() => {
     const id = addAtNode("shot");
     if (!id || !node) return;
-    onConnect({ source: node.id, target: id, sourceHandle: null, targetHandle: null });
+    connectRel(node.id, id, "reference");
     generateFromNode(id, "video");
-  }, [addAtNode, node, onConnect, generateFromNode]);
+  }, [addAtNode, node, connectRel, generateFromNode]);
 
   // 逐帧拉片：以当前节点为源，派生 3 个并排分镜格（帧条），方便逐帧编排
   const frameStrip = useCallback(() => {
     if (!node) return;
     const baseX = node.position.x + 260;
     const baseY = node.position.y;
+    let prevId: string | null = null;
     for (let i = 0; i < 3; i++) {
       const id = addNode("shot", { x: baseX + i * 300, y: baseY + i * 8 });
-      onConnect({ source: node.id, target: id, sourceHandle: null, targetHandle: null });
+      if (prevId) connectRel(prevId, id, "sequence");
+      else connectRel(node.id, id, "reference");
       useStudio.getState().updateNodePayload(id, { note: `帧 ${i + 1}` });
+      prevId = id;
     }
-  }, [node, addNode, onConnect]);
+  }, [node, addNode, connectRel]);
 
   // 上传本地图片 → 落为素材节点（离线可用）
   const handleFile = useCallback(
@@ -201,7 +202,7 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
         { title: "添加节点", items: addItems },
         { title: null, items: [{ icon: IconScript, label: "脚本", submenu: "script" } as MenuItem, { icon: IconAssets, label: "素材库", submenu: "asset" } as MenuItem] },
         { title: "批量操作", items: batchItems },
-        { title: "添加资源", items: [{ icon: IconUpload, label: "上传图片", action: () => fileRef.current?.click() }, { icon: IconHistory, label: "从生成历史选择", action: () => setOpenSub("asset") }] },
+        { title: "添加资源", items: [{ icon: IconUpload, label: "上传图片", action: () => fileRef.current?.click() }, { icon: IconHistory, label: "从生成历史选择", action: () => setOpenSub("history") }] },
         { title: "工作台", items: [{ icon: IconDirector, label: "进入 3D 导演台", badge: "NEW", badgeTone: "ok", action: () => useStudio.getState().setStudioMode("stage") }] },
       ];
 
@@ -318,6 +319,43 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
             >
               <span className="node-action-submenu__thumb">{a.preview ? <img src={a.preview} alt="" /> : <IconImage size={14} />}</span>
               <span className="truncate">{a.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {openSub === "history" && (
+        <div
+          className="node-action-submenu"
+          style={{ left: menuPos.x + (menuRef.current?.offsetWidth ?? 224) + 8, top: menuPos.y + subTop }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="node-action-submenu__head">
+            生成历史
+            <button className="node-action-submenu__x" onClick={closeSub}>×</button>
+          </div>
+          {genHistory.length === 0 && <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--text-faint)" }}>暂无生成记录，先对节点执行「出图 / 出视频」</div>}
+          {[...genHistory].reverse().map((h) => (
+            <button
+              key={h.id}
+              className="node-action-submenu__item"
+              onClick={() => {
+                const pos = node
+                  ? { x: node.position.x + 260, y: node.position.y + 20 }
+                  : (screenPos ? rf.screenToFlowPosition({ x: screenPos.x, y: screenPos.y }) : { x: 120, y: 120 });
+                const newId = addNode("asset", pos);
+                if (newId) {
+                  useStudio.getState().updateNodePayload(newId, {
+                    results: [{ id: String(Date.now()), kind: h.kind, status: "success", url: h.url, model: h.model, createdAt: h.createdAt }],
+                    note: `${h.nodeLabel} · 生成历史`,
+                  });
+                  if (node) useStudio.getState().connectRel(node.id, newId, "reference");
+                }
+                closeSub();
+              }}
+            >
+              <span className="node-action-submenu__thumb">{h.url ? <img src={h.url} alt="" /> : <IconImage size={14} />}</span>
+              <span className="truncate">{h.nodeLabel} · {h.kind === "image" ? "图" : "视频"}</span>
             </button>
           ))}
         </div>
