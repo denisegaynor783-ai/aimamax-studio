@@ -553,6 +553,29 @@
 .bottombar__btn:hover:not(:disabled) { color: var(--film); border-color: var(--film); }
 .bottombar__btn:disabled { opacity: 0.4; cursor: default; }
 
+/* —— 画布级面板（资产管理 / 分镜时间线） —— */
+.canvas-panel-overlay { position: absolute; inset: 0; z-index: 70; background: rgba(7,7,9,0.55); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.canvas-panel { width: 560px; max-width: 92%; max-height: 74%; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 24px 70px rgba(0,0,0,0.55); display: flex; flex-direction: column; overflow: hidden; }
+.canvas-panel--wide { width: 760px; }
+.canvas-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 13px; }
+.canvas-panel__head svg { vertical-align: -2px; margin-right: 4px; }
+.canvas-panel__count { font-size: 11px; font-weight: 600; color: var(--film); background: color-mix(in srgb, var(--film) 16%, transparent); padding: 1px 7px; border-radius: 999px; margin-left: 4px; }
+.canvas-panel__body { padding: 12px 14px; overflow: auto; }
+.canvas-panel__empty { font-size: 12px; line-height: 1.7; color: var(--text-faint); padding: 14px 4px; }
+.canvas-panel__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.asset-card { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 10px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font-size: 12px; cursor: pointer; text-align: left; transition: border-color 0.15s, transform 0.1s; }
+.asset-card:hover { border-color: var(--film); transform: translateY(-2px); }
+.asset-card__thumb { width: 100%; height: 84px; border-radius: 7px; overflow: hidden; display: grid; place-items: center; background: var(--bg-sunken); color: var(--text-dim); }
+.asset-card__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.asset-card__kind { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; color: var(--info); background: color-mix(in srgb, var(--info) 16%, transparent); padding: 1px 7px; border-radius: 999px; }
+.timeline-track { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.timeline-shot { flex: none; width: 132px; display: flex; flex-direction: column; gap: 6px; padding: 8px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 10px; color: var(--text); cursor: pointer; text-align: left; transition: border-color 0.15s, transform 0.1s; }
+.timeline-shot:hover { border-color: var(--film); transform: translateY(-2px); }
+.timeline-shot__idx { font-size: 11px; font-weight: 700; color: var(--film); }
+.timeline-shot__thumb { width: 100%; height: 74px; border-radius: 7px; overflow: hidden; display: grid; place-items: center; background: var(--bg-sunken); color: var(--text-dim); }
+.timeline-shot__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.timeline-shot__label { font-size: 11px; color: var(--text-dim); }
+
 /* —— 分组节点 minimap 配色 —— */
 .react-flow__minimap-node[data-kind="group"] { fill: #ffc24b; }
 

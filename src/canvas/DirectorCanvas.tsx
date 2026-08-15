@@ -27,6 +27,7 @@ import {
   IconFullscreenExit, IconLayout, IconGrid, IconAssetLib, IconTimeline,
 } from "../components/icons";
 import { NodeActionMenu } from "./NodeActionMenu";
+import { AssetPanel, TimelinePanel } from "./CanvasPanels";
 import { NODE_PALETTE, ACTION_ITEMS, QUICK_GEN } from "./palette";
 import type { NodeKind, EdgeRel as EdgeRelType } from "../lib/types";
 
@@ -65,6 +66,8 @@ export function DirectorCanvas() {
   const [pendingEdgeId, setPendingEdgeId] = useState<string | null>(null);
   // —— 右键上下文菜单（D2：统一浮动菜单） ——
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; nodeId: string | null } | null>(null);
+  // —— 画布级面板（资产管理 / 分镜时间线），消除底栏空 stub ——
+  const [panel, setPanel] = useState<"asset" | "timeline" | null>(null);
   const shots = nodes.filter((n) => n.data.kind === "shot");
 
   // —— 全屏工作台（OS 级覆盖整屏 + CSS 兜底），进入后重新适配视图 ——
@@ -101,6 +104,28 @@ export function DirectorCanvas() {
     },
     [addAtCenter, generateFromNode]
   );
+
+  // —— 画布中心坐标（供资产插入 / 面板落点） ——
+  const centerFlowPos = useCallback(() => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    const cx = rect ? rect.width / 2 : 400;
+    const cy = rect ? rect.height / 2 : 300;
+    return rf.screenToFlowPosition({ x: rect!.left + cx, y: rect!.top + cy });
+  }, [rf]);
+
+  // 资产管理：插入素材到画布中心并关面板
+  const insertAssetAtCenter = useCallback((assetId: string) => {
+    useStudio.getState().insertAssetNode(assetId, centerFlowPos());
+    setPanel(null);
+  }, [centerFlowPos]);
+
+  // 时间线：聚焦并选中某分镜
+  const focusNode = useCallback((id: string) => {
+    const n = useStudio.getState().nodes.find((x) => x.id === id);
+    if (n) rf.setCenter(n.position.x, n.position.y, { zoom: 1.1, duration: 400 });
+    useStudio.getState().selectNode(id);
+    setPanel(null);
+  }, [rf]);
 
   // —— 连线：创建后弹出关系选择器 ——
   const handleConnect = useCallback(
@@ -337,7 +362,7 @@ export function DirectorCanvas() {
       {/* D3: 底部固定工具栏（整合分镜故事条） */}
       <div className="canvas-bottombar">
         <div className="canvas-bottombar__left">
-          <IconButton title="资产管理" onClick={() => { /* TODO: 打开资产面板 */ }}>
+          <IconButton title={panel === "asset" ? "关闭资产管理" : "资产管理（素材入库后复用）"} data-active={panel === "asset"} onClick={() => setPanel((p) => (p === "asset" ? null : "asset"))}>
             <IconAssetLib size={15} />
           </IconButton>
           <div className="bottombar__div" />
@@ -380,7 +405,7 @@ export function DirectorCanvas() {
         )}
 
         <div className="canvas-bottombar__right">
-          <IconButton title="时间线" onClick={() => { /* TODO: 时间线面板 */ }}>
+          <IconButton title={panel === "timeline" ? "关闭时间线" : "分镜时间线（按连线时序排序）"} data-active={panel === "timeline"} onClick={() => setPanel((p) => (p === "timeline" ? null : "timeline"))}>
             <IconTimeline size={15} />
           </IconButton>
           <span className="flow-stat" style={{ minWidth: 42, textAlign: "center" }}>
@@ -408,6 +433,17 @@ export function DirectorCanvas() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* 画布级面板：资产管理 / 分镜时间线（消除底栏空 stub） */}
+      {panel && (
+        <div className="canvas-panel-overlay" onClick={() => setPanel(null)}>
+          {panel === "asset" ? (
+            <AssetPanel onClose={() => setPanel(null)} onInsert={insertAssetAtCenter} />
+          ) : (
+            <TimelinePanel onClose={() => setPanel(null)} onFocus={focusNode} />
+          )}
         </div>
       )}
     </div>

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import type { NodeKind } from "../lib/types";
 import {
   IconText, IconImage, IconVideo, IconMusic,
+  IconCharacter, IconScene,
   IconScissors, IconDirector, IconFilmStrip,
 } from "../components/icons";
 
@@ -15,11 +16,13 @@ export interface PaletteItem {
   icon: (p: { size?: number }) => ReactNode;
 }
 
-/** ── 添加节点区：内容基元（文本/图片/视频/音频） ── */
+/** ── 添加节点区：内容基元（覆盖引擎支持的全部节点类型，菜单与菜单引导一一对应） ── */
 export const NODE_PALETTE: PaletteItem[] = [
   { kind: "text", label: "文本", icon: IconText },
   { kind: "shot", label: "图片", icon: IconImage },
   { kind: "shot", label: "视频", icon: IconVideo },
+  { kind: "character", label: "角色卡", icon: IconCharacter },
+  { kind: "scene", label: "场景卡", icon: IconScene },
   { kind: "music", label: "音频", icon: IconMusic },
 ];
 
