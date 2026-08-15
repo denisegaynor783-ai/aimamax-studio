@@ -20,23 +20,17 @@ import { toPng } from "html-to-image";
 import { useStudio } from "../lib/store";
 import { useFullscreen } from "../lib/useFullscreen";
 import { StudioNode } from "./StudioNode";
+import { GroupNode } from "./GroupNode";
 import { Button, IconButton } from "../components/ui";
 import {
-  IconPlus, IconCharacter, IconScene, IconImage, IconText, IconMusic, IconSave, IconExpand,
-  IconFullscreenExit, IconLayout, IconGrid,
+  IconPlus, IconImage, IconSave, IconExpand,
+  IconFullscreenExit, IconLayout, IconGrid, IconAssetLib, IconTimeline,
 } from "../components/icons";
+import { NodeActionMenu } from "./NodeActionMenu";
+import { NODE_PALETTE, QUICK_GEN } from "./palette";
 import type { NodeKind, EdgeRel as EdgeRelType } from "../lib/types";
 
-const nodeTypes = { studio: StudioNode };
-
-const ADD_KINDS: { kind: NodeKind; label: string; icon: (p: { size?: number }) => JSX.Element }[] = [
-  { kind: "character", label: "角色卡", icon: IconCharacter },
-  { kind: "scene", label: "场景卡", icon: IconScene },
-  { kind: "shot", label: "分镜格", icon: IconImage },
-  { kind: "asset", label: "素材", icon: IconImage },
-  { kind: "text", label: "文本 / 脚本", icon: IconText },
-  { kind: "music", label: "音乐轨", icon: IconMusic },
-];
+const nodeTypes = { studio: StudioNode, group: GroupNode };
 
 const REL_META: Record<EdgeRelType, { label: string; cls: string }> = {
   sequence: { label: "时序", cls: "rel-sequence" },
@@ -52,6 +46,9 @@ const KIND_COLOR: Record<string, string> = {
   prompt: "#ff6b1a",
   music: "#3ddc84",
   text: "#9aa0b5",
+  script: "#e056fd",
+  generator: "#ff6b1a",
+  group: "#ffc24b",
 };
 
 type BgMode = "dots" | "lines" | "none";
@@ -60,12 +57,14 @@ export function DirectorCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const {
     nodes, edges, onNodesChange, onEdgesChange, onConnect, setEdgeRel, addNode, saveCurrent, project,
-    applyLayout,
+    applyLayout, past, future, generateFromNode,
   } = useStudio();
   const rf = useReactFlow();
   const [addOpen, setAddOpen] = useState(false);
   const [bg, setBg] = useState<BgMode>("dots");
   const [pendingEdgeId, setPendingEdgeId] = useState<string | null>(null);
+  // —— 右键上下文菜单（D2：统一浮动菜单） ——
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; nodeId: string | null } | null>(null);
   const shots = nodes.filter((n) => n.data.kind === "shot");
 
   // —— 全屏工作台（OS 级覆盖整屏 + CSS 兜底），进入后重新适配视图 ——
@@ -80,17 +79,27 @@ export function DirectorCanvas() {
     return () => clearTimeout(t);
   }, [nodes, edges, project, saveCurrent]);
 
-  // —— 添加节点到视口中心 ——
+  // —— 添加节点到视口中心（返回新建 id，供快捷生成复用） ——
   const addAtCenter = useCallback(
-    (kind: NodeKind) => {
+    (kind: NodeKind): string => {
       const rect = wrapRef.current?.getBoundingClientRect();
       const cx = rect ? rect.width / 2 : 400;
       const cy = rect ? rect.height / 2 : 300;
       const pos = rf.screenToFlowPosition({ x: rect!.left + cx, y: rect!.top + cy });
-      addNode(kind, { x: pos.x - 115, y: pos.y - 40 });
+      const id = addNode(kind, { x: pos.x - 115, y: pos.y - 40 });
       setAddOpen(false);
+      return id;
     },
     [rf, addNode]
+  );
+
+  // —— 快捷生成：视口中心新建分镜格并立即出图 / 出视频 ——
+  const addAtCenterGen = useCallback(
+    (gen: "image" | "video") => {
+      const id = addAtCenter("shot");
+      if (id) generateFromNode(id, gen);
+    },
+    [addAtCenter, generateFromNode]
   );
 
   // —— 连线：创建后弹出关系选择器 ——
@@ -189,11 +198,20 @@ export function DirectorCanvas() {
           </Button>
           {addOpen && (
             <div className="addpop">
-              {ADD_KINDS.map((k) => {
+              {NODE_PALETTE.map((k) => {
                 const I = k.icon;
                 return (
                   <button key={k.kind} onClick={() => addAtCenter(k.kind)}>
                     <I size={16} /> {k.label}
+                  </button>
+                );
+              })}
+              <div className="addpop__div" />
+              {QUICK_GEN.map((q) => {
+                const I = q.icon;
+                return (
+                  <button key={q.gen} onClick={() => addAtCenterGen(q.gen)}>
+                    <I size={16} /> {q.label}
                   </button>
                 );
               })}
@@ -210,9 +228,6 @@ export function DirectorCanvas() {
           onClick={() => setBg((b) => (b === "dots" ? "lines" : b === "lines" ? "none" : "dots"))}
         >
           <IconGrid size={16} />
-        </IconButton>
-        <IconButton title="适应视图" onClick={() => rf.fitView({ padding: 0.2, duration: 400 })}>
-          <IconExpand size={16} />
         </IconButton>
         <IconButton title="保存并截图" onClick={snapAndSave}>
           <IconSave size={16} />
@@ -254,7 +269,21 @@ export function DirectorCanvas() {
         onConnect={handleConnect}
         onEdgeClick={(_, e) => setPendingEdgeId(e.id)}
         onNodeClick={(_, n) => useStudio.getState().selectNode(n.id)}
-        onPaneClick={() => { useStudio.getState().selectNode(null); setPendingEdgeId(null); }}
+        onPaneClick={() => { useStudio.getState().selectNode(null); setPendingEdgeId(null); setCtxMenu(null); }}
+        onNodeContextMenu={(event, node) => {
+          const e = event as unknown as MouseEvent;
+          e.preventDefault();
+          const nodeId = node?.id ?? null;
+          if (nodeId) {
+            useStudio.getState().selectNode(nodeId);
+            setCtxMenu({ x: e.clientX, y: e.clientY, nodeId });
+          }
+        }}
+        onPaneContextMenu={(event) => {
+          const e = event as unknown as MouseEvent;
+          e.preventDefault();
+          setCtxMenu({ x: e.clientX, y: e.clientY, nodeId: null });
+        }}
         deleteKeyCode={["Backspace", "Delete"]}
         fitView
         minZoom={0.15}
@@ -275,34 +304,80 @@ export function DirectorCanvas() {
         />
       </ReactFlow>
 
-      {shots.length > 0 && (
-        <div className="storyboard-strip">
-          <div className="storyboard-strip__head">分镜</div>
-          <div className="storyboard-strip__row">
-            {shots.map((n) => {
-              const r = (n.data.payload.results ?? []).find((x) => x.url);
-              return (
-                <button
-                  key={n.id}
-                  className="storyboard-chip"
-                  title={n.data.label}
-                  onClick={() => {
-                    rf.setCenter(n.position.x, n.position.y, { zoom: 1.1, duration: 400 });
-                    useStudio.getState().selectNode(n.id);
-                  }}
-                >
-                  {r ? (
-                    <img src={r.url} alt={n.data.label} />
-                  ) : (
-                    <span className="storyboard-chip__ph">
-                      <IconImage size={14} />
-                    </span>
-                  )}
-                  <span className="storyboard-chip__label">{n.data.label}</span>
-                </button>
-              );
-            })}
+      {/* D3: 底部固定工具栏（整合分镜故事条） */}
+      <div className="canvas-bottombar">
+        <div className="canvas-bottombar__left">
+          <IconButton title="资产管理" onClick={() => { /* TODO: 打开资产面板 */ }}>
+            <IconAssetLib size={15} />
+          </IconButton>
+          <div className="bottombar__div" />
+          <button className="bottombar__btn" disabled={past.length === 0} onClick={() => useStudio.getState().undo()} title="撤销 (Ctrl+Z)">↶ 撤销</button>
+          <button className="bottombar__btn" disabled={future.length === 0} onClick={() => useStudio.getState().redo()} title="重做 (Ctrl+Shift+Z)">↷ 重做</button>
+          <div className="bottombar__div" />
+          <span className="flow-stat" title="画布节点总数">{nodes.length} 节点</span>
+        </div>
+
+        {/* 分镜故事条（嵌入底栏中央） */}
+        {shots.length > 0 && (
+          <div className="storyboard-strip storyboard-strip--inline">
+            <div className="storyboard-strip__head">分镜</div>
+            <div className="storyboard-strip__row">
+              {shots.map((n) => {
+                const r = (n.data.payload.results ?? []).find((x) => x.url);
+                return (
+                  <button
+                    key={n.id}
+                    className="storyboard-chip"
+                    title={n.data.label}
+                    onClick={() => {
+                      rf.setCenter(n.position.x, n.position.y, { zoom: 1.1, duration: 400 });
+                      useStudio.getState().selectNode(n.id);
+                    }}
+                  >
+                    {r ? (
+                      <img src={r.url} alt={n.data.label} />
+                    ) : (
+                      <span className="storyboard-chip__ph">
+                        <IconImage size={14} />
+                      </span>
+                    )}
+                    <span className="storyboard-chip__label">{n.data.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
+        )}
+
+        <div className="canvas-bottombar__right">
+          <IconButton title="时间线" onClick={() => { /* TODO: 时间线面板 */ }}>
+            <IconTimeline size={15} />
+          </IconButton>
+          <span className="flow-stat" style={{ minWidth: 42, textAlign: "center" }}>
+            {Math.round(rf.getViewport().zoom * 100)}%
+          </span>
+        </div>
+      </div>
+
+      {/* D2: 右键统一浮动菜单 */}
+      {ctxMenu && (
+        <div
+          className="ctx-overlay"
+          onClick={() => setCtxMenu(null)}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <NodeActionMenu
+            nodeId={ctxMenu.nodeId ?? ""}
+            position={{ x: 0, y: 0 }}
+            screenPos={ctxMenu}
+          />
+          <button
+            className="ctx-close"
+            onClick={() => setCtxMenu(null)}
+            title="关闭菜单"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

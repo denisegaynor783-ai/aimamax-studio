@@ -1,0 +1,261 @@
+/* ============================================================
+   AIMAMAX Studio — 登录页（影院控制台风格）
+   与主页面同源：深空黑底 + 胶片橙渐变 + 等宽技术字体
+   ============================================================ */
+.login-epic {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-void);
+  overflow: hidden;
+}
+
+/* 品牌渐变光晕（与主页面 hero 同源） */
+.login-epic__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(80% 60% at 22% 18%, rgba(255, 107, 26, 0.16), transparent 60%),
+    radial-gradient(70% 60% at 100% 100%, rgba(255, 59, 48, 0.12), transparent 55%),
+    linear-gradient(135deg, #0c0a10 0%, #070709 55%, #0a0a0e 100%);
+}
+.login-epic__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(120% 100% at 50% 40%, #000 40%, transparent 100%);
+}
+
+.login-epic__back {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 15, 21, 0.6);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  padding: 8px 13px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  backdrop-filter: blur(8px);
+  transition: all 0.16s var(--ease);
+}
+.login-epic__back:hover {
+  color: var(--film);
+  border-color: rgba(255, 107, 26, 0.4);
+}
+
+.login-epic__split {
+  position: relative;
+  z-index: 2;
+  width: min(960px, 92vw);
+  max-height: 88vh;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  background: rgba(12, 12, 17, 0.72);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-3);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+/* —— 品牌侧 —— */
+.login-epic__brand {
+  position: relative;
+  padding: 40px 38px;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(160deg, rgba(255, 107, 26, 0.1), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+  border-right: 1px solid var(--line);
+}
+.login-epic__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: var(--grad-film);
+  color: var(--text-on-film);
+  box-shadow: var(--glow-film);
+}
+.login-epic__eyebrow {
+  margin-top: 22px;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--film);
+  text-transform: uppercase;
+}
+.login-epic__tagline {
+  margin: 12px 0 0;
+  font-size: 40px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  background: linear-gradient(180deg, #fff, #c7c7d2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.login-epic__lede {
+  margin: 18px 0 0;
+  color: var(--text-dim);
+  font-size: 13.5px;
+  line-height: 1.7;
+  max-width: 320px;
+}
+.login-epic__feats {
+  list-style: none;
+  margin: 30px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.login-epic__feats li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.login-epic__feat-ic {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--bg-elev);
+  color: var(--film);
+  border: 1px solid var(--line);
+}
+.login-epic__feats b {
+  display: block;
+  font-size: 13.5px;
+}
+.login-epic__feats span {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.login-epic__brand-foot {
+  margin-top: auto;
+  padding-top: 26px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* —— 表单侧 —— */
+.login-epic__panel {
+  padding: 40px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.login-epic__card {
+  width: 100%;
+}
+.login-epic__card h2 {
+  margin: 8px 0 4px;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+.login-epic__sub {
+  margin: 0 0 24px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.login-epic__card .field {
+  margin-bottom: 16px;
+}
+.login-epic__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px 0 14px;
+}
+.login-epic__remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.login-epic__remember input {
+  accent-color: var(--film);
+  width: 15px;
+  height: 15px;
+}
+.login-epic__link {
+  font-size: 12.5px;
+  color: var(--film);
+  cursor: pointer;
+}
+.login-epic__link:hover {
+  text-decoration: underline;
+}
+.login-epic__err {
+  margin-bottom: 12px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: rgba(255, 59, 48, 0.12);
+  border: 1px solid rgba(255, 59, 48, 0.35);
+  color: var(--signal);
+  font-size: 12.5px;
+}
+.login-epic__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+.login-epic__divider::before,
+.login-epic__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.login-epic__foot {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.login-epic__copy {
+  position: absolute;
+  bottom: 16px;
+  right: 38px;
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+/* —— 响应式：窄屏堆叠，隐藏品牌侧 —— */
+@media (max-width: 760px) {
+  .login-epic__split {
+    grid-template-columns: 1fr;
+    max-height: 92vh;
+    overflow: auto;
+  }
+  .login-epic__brand {
+    display: none;
+  }
+  .login-epic__panel {
+    padding: 34px 26px;
+  }
+  .login-epic__copy {
+    display: none;
+  }
+}

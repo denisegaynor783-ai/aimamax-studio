@@ -8,9 +8,10 @@ import { useStudio } from "../lib/store";
 import { DirectorCanvas } from "../canvas/DirectorCanvas";
 import { DirectorStage3D } from "../canvas/DirectorStage3D";
 import { Inspector } from "../canvas/Inspector";
+import { NodeActionMenu } from "../canvas/NodeActionMenu";
 import { Button, EmptyState } from "../components/ui";
 import { NewProjectModal } from "../components/NewProjectModal";
-import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron } from "../components/icons";
+import { IconCreate, IconProjects, IconFilm, IconCube } from "../components/icons";
 
 // 检视器宽度约束（紧凑默认值，可手动收缩/拉伸）
 const INSPECTOR_MIN = 248;
@@ -20,9 +21,8 @@ const INSPECTOR_DEFAULT = 300;
 export default function Studio() {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const { project, openProject, selectedNodeId } = useStudio();
+  const { project, openProject, selectedNodeId, nodes, studioMode, setStudioMode } = useStudio();
   const [showNew, setShowNew] = useState(false);
-  const [mode, setMode] = useState<"canvas" | "stage">("canvas");
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [inspectorW, setInspectorW] = useState(INSPECTOR_DEFAULT);
   const [resizing, setResizing] = useState(false);
@@ -33,6 +33,13 @@ export default function Studio() {
       openProject(pid);
     }
   }, [pid, project?.id, openProject]);
+
+  // —— 浮动菜单：检视器隐藏时，根据选中节点位置渲染 ——
+  const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) : undefined;
+  const floatingMenu = studioMode === "canvas" && inspectorCollapsed && selectedNode && selectedNodeId
+    ? <NodeActionMenu nodeId={selectedNodeId} position={selectedNode.position} />
+    : null;
+  const canvasArea = studioMode === "canvas" ? <DirectorCanvas /> : <DirectorStage3D />;
 
   // —— 检视器拖拽改宽（左侧手柄）——
   const startResize = useCallback((e: React.MouseEvent) => {
@@ -53,6 +60,25 @@ export default function Studio() {
     document.body.style.userSelect = "none";
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+  }, []);
+
+  // —— 全局快捷键：撤销/重做 · 复制/粘贴/剪切 ——
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const k = e.key.toLowerCase();
+      const s = useStudio.getState();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); s.undo(); }
+      else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); s.redo(); }
+      else if (k === "c") { e.preventDefault(); s.copySelection(); }
+      else if (k === "v") { e.preventDefault(); s.pasteClipboard(); }
+      else if (k === "x") { e.preventDefault(); s.copySelection(); s.deleteSelected(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   if (!project) {
@@ -76,44 +102,36 @@ export default function Studio() {
 
   return (
     <ReactFlowProvider>
-      <div id="studio-layout" className="studio-layout" data-mode={mode}>
+      <div id="studio-layout" className="studio-layout" data-mode={studioMode}>
         <div className="studio-modebar">
           <div className="seg">
-            <button data-active={mode === "canvas"} onClick={() => setMode("canvas")}>
+            <button data-active={studioMode === "canvas"} onClick={() => setStudioMode("canvas")}>
               <IconFilm size={14} /> 画布
             </button>
-            <button data-active={mode === "stage"} onClick={() => setMode("stage")}>
+            <button data-active={studioMode === "stage"} onClick={() => setStudioMode("stage")}>
               <IconCube size={14} /> 3D 导演台
             </button>
           </div>
           <span className="muted" style={{ fontSize: 12 }}>{project.name}</span>
         </div>
         <div className="studio-body">
-          {mode === "canvas" ? <DirectorCanvas /> : <DirectorStage3D />}
+          {canvasArea}
 
-          {mode === "canvas" && (
+          {/* 检视器：未隐藏时显示右侧面板 */}
+          {studioMode === "canvas" && !inspectorCollapsed && (
             <aside
               className="studio-inspector"
               data-open={!!selectedNodeId}
-              data-collapsed={inspectorCollapsed}
               data-resizing={resizing}
-              style={{ width: inspectorCollapsed ? 0 : inspectorW }}
+              style={{ width: inspectorW }}
             >
               <div className="inspector-resize" onMouseDown={startResize} title="拖动调整检视器宽度" />
               <Inspector onCollapse={() => setInspectorCollapsed(true)} />
             </aside>
           )}
 
-          {mode === "canvas" && inspectorCollapsed && (
-            <button
-              className="inspector-reopen"
-              onClick={() => setInspectorCollapsed(false)}
-              title="展开检视器"
-              aria-label="展开检视器"
-            >
-              <IconChevron size={16} />
-            </button>
-          )}
+          {/* 检视器隐藏时：浮动功能菜单吸附于选中节点旁 */}
+          {floatingMenu}
         </div>
       </div>
     </ReactFlowProvider>

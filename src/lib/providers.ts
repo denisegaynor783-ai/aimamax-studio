@@ -92,19 +92,21 @@ async function callText(prov: ProviderConfig, req: GenRequest, base: GenResult):
   return { ...base, status: "success", text };
 }
 
-// —— 真实调用：图像（images/generations） ——
+// —— 真实调用：图像（images/generations，支持 init_image 图生图） ——
 async function callImage(prov: ProviderConfig, req: GenRequest, base: GenResult): Promise<GenResult> {
   const size = (req.params?.size as string) ?? "1024x1024";
+  const body: Record<string, unknown> = {
+    model: req.model,
+    prompt: req.prompt,
+    n: 1,
+    size,
+    response_format: "url",
+  };
+  if (req.initImage) body.image = req.initImage; // 上游参考图 → 一致性
   const res = await fetch(`${prov.baseUrl.replace(/\/$/, "")}/images/generations`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${prov.apiKey}` },
-    body: JSON.stringify({
-      model: req.model,
-      prompt: req.prompt,
-      n: 1,
-      size,
-      response_format: "url",
-    }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();

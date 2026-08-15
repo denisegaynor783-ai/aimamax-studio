@@ -215,3 +215,66 @@ export const IconLink2 = (p: P) => (
     <path d="M8.5 6H15a3 3 0 013 3v6.5" />
   </S>
 );
+export const IconScissors = (p: P) => (
+  <S {...p}>
+    <circle cx="8" cy="7" r="3" />
+    <circle cx="16" cy="17" r="3" />
+    <path d="M6.5 9.5L17.5 14.5M17.5 9.5L6.5 14.5" />
+  </S>
+);
+export const IconDirector = (p: P) => (
+  <S {...p}>
+    <rect x="3" y="4" width="18" height="15" rx="2" />
+    <path d="M3 9h18M7 13h4M7 16h8" />
+    <circle cx="17" cy="14" r="1.5" fill="currentColor" stroke="none" />
+  </S>
+);
+export const IconFilmStrip = (p: P) => (
+  <S {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M7 5v14M17 5v14M3 9h2M19 9h2M3 15h2M19 15h2" />
+    <path d="M10 10l4 4-4 4" />
+  </S>
+);
+export const IconUpload = (p: P) => (
+  <S {...p}>
+    <path d="M12 15V3M8 7l4-4 4 4" />
+    <path d="M3 15v4h14a2 2 0 002-2v-2" />
+  </S>
+);
+export const IconHistory = (p: P) => (
+  <S {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" />
+    <path d="M17 9l2-2-2-2" />
+    <path d="M19 7a5 5 0 00-9-1" />
+  </S>
+);
+export const IconScript = (p: P) => (
+  <S {...p}>
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+    <path d="M14 2v6h6M9 13h6M9 17h6" />
+  </S>
+);
+export const IconAssetLib = (p: P) => (
+  <S {...p}>
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <path d="M14 3h7v7M14 10l7-7M3 14h7v7H3z" />
+  </S>
+);
+export const IconTimeline = (p: P) => (
+  <S {...p}>
+    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" strokeLinecap="round" />
+    <circle cx="12" cy="12" r="3" />
+  </S>
+);
+export const IconChevronDown = (p: P) => (
+  <S {...p}>
+    <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+  </S>
+);
+export const IconChevronUp = (p: P) => (
+  <S {...p}>
+    <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+  </S>
+);

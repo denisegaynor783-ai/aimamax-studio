@@ -80,7 +80,10 @@ export type NodeKind =
   | "asset" // 素材引用
   | "prompt" // 生成任务
   | "music" // 音乐轨
-  | "text"; // 文本 / 脚本
+  | "text" // 文本 / 脚本
+  | "script" // 剧本（富信息卡片：标题+元数据+标签+内容）
+  | "generator" // AI 生成器节点（剧本/图片/视频生成器）
+  | "group"; // 节点分组（视觉包围盒，可折叠）
 
 export interface StudioNodeData {
   kind: NodeKind;
@@ -97,15 +100,44 @@ export interface StudioNodeData {
     /** 角色/场景的结构化字段 */
     fields?: Record<string, string>;
     note?: string;
+    // —— 剧本/脚本节点结构化字段（D1 富卡片） ——
+    /** 类型标签（如 "古风 / 穿越 / 美文演绎"）*/
+    genre?: string;
+    /** 时长建议（如 "60~90秒"）*/
+    duration?: string;
+    /** 基调/氛围（如 "热血 × 盛唐史诗范"）*/
+    mood?: string;
+    /** 标签组（如 ["现代", "夜晚", "办公室"]）*/
+    tags?: string[];
+    // —— 生成器节点字段 ——
+    /** 是否为生成器节点 */
+    isGenerator?: boolean;
+    /** 生成器类型：script / image / video */
+    generatorType?: "script" | "image" | "video";
+    /** 模板 ID（预设生成器配置）*/
+    templateId?: string;
+    /** 定价提示（如 "M$9.2/s"）*/
+    pricing?: string;
+    // —— 分组节点字段 ——
+    /** 成员节点归属的分组 id（仅分组内成员设置）*/
+    groupId?: string;
+    /** 分组是否折叠（仅 group 节点）*/
+    collapsed?: boolean;
+    /** 分组内成员数（仅 group 节点）*/
+    count?: number;
+    /** 分组包围盒尺寸（仅 group 节点）*/
+    dimensions?: { w: number; h: number };
   };
   [key: string]: unknown;
 }
 
 export interface StudioNode {
   id: string;
-  type: "studio";
+  type: "studio" | "group";
   position: { x: number; y: number };
   data: StudioNodeData;
+  zIndex?: number;
+  hidden?: boolean;
 }
 
 export type EdgeRel = "sequence" | "reference" | "audio";
@@ -182,4 +214,6 @@ export interface GenRequest {
   model: string;
   provider: string;
   params?: Record<string, number | string>;
+  /** 上游参考图（素材/角色图）→ 图生图一致性 */
+  initImage?: string;
 }
