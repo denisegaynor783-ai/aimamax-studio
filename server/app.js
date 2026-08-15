@@ -25,6 +25,7 @@ const { demoGenerate } = require("./lib/demo");
 const { chat, image, video, catalog } = require("./lib/toapis");
 const { AGENTS, getAgent, demoAgent } = require("./lib/agents");
 const { PRESET_CHARACTERS, listCharacters } = require("./lib/characters");
+const corpus = require("./lib/prompt-corpus");
 
 const PORT = process.env.PORT || 3000;
 
@@ -132,6 +133,12 @@ async function handleAgent(req, res) {
   if (!agent) return sendJson(res, 404, { error: "agent not found: " + agentId });
   if (!prompt) return sendJson(res, 400, { error: "prompt required" });
 
+  // Few-shot：仅对「提示词工程」类 agent 注入中文电影提示词范例（检索最相关的 top-5）
+  const few = agent.category === "提示词工程"
+    ? corpus.getFewShot(prompt, { k: 5 })
+    : [];
+  const fewMeta = { corpusSize: corpus.CORPUS_SIZE, used: few.map((e) => e.input) };
+
   if (DEMO_MODE || !TOAPIS_KEY) {
     return sendJson(res, 200, {
       ok: true,
@@ -140,10 +147,12 @@ async function handleAgent(req, res) {
       text: demoAgent(agent, prompt),
       model: agent.defaultModel,
       demo: true,
+      fewShot: fewMeta,
     });
   }
   try {
-    const text = await chat(model || agent.defaultModel, prompt, agent.system, agent.temperature);
+    const sys = (agent.system || "") + corpus.buildFewShotBlock(few);
+    const text = await chat(model || agent.defaultModel, prompt, sys, agent.temperature);
     return sendJson(res, 200, {
       ok: true,
       agent: agentId,
@@ -151,6 +160,7 @@ async function handleAgent(req, res) {
       text,
       model: model || agent.defaultModel,
       demo: false,
+      fewShot: fewMeta,
     });
   } catch (e) {
     return sendJson(res, 200, {
@@ -160,6 +170,7 @@ async function handleAgent(req, res) {
       text: demoAgent(agent, prompt),
       model: agent.defaultModel,
       demo: true,
+      fewShot: fewMeta,
       error: "toapis_failed: " + e.message,
     });
   }

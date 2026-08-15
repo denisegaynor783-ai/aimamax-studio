@@ -208,3 +208,27 @@
 .cine-chip[data-active="true"] {
   background: var(--film); border-color: var(--film); color: #fff;
 }
+
+/* —— 中文范例参考（few-shot 展示） —— */
+.ex-panel { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-panel); }
+.ex-note { font-size: 12px; color: var(--text-dim); line-height: 1.6; margin: 0 0 10px; }
+.ex-note b { color: var(--film); }
+.ex-card { border: 1px solid var(--line); border-radius: var(--r-sm); margin-bottom: 8px; overflow: hidden; }
+.ex-card:last-child { margin-bottom: 0; }
+.ex-card__head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; background: rgba(255,255,255,.02); }
+.ex-card__head:hover { background: rgba(168,85,247,.08); }
+.ex-card__input { font-size: 13px; font-weight: 600; color: var(--text); }
+.ex-card__chev { margin-left: auto; opacity: .6; font-size: 11px; }
+.ex-card__tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 10px 8px; }
+.ex-card__out {
+  margin: 0; padding: 10px; font-family: var(--mono); font-size: 11px; line-height: 1.7;
+  color: var(--film); background: rgba(0,0,0,.25); white-space: pre-wrap; word-break: break-word;
+  border-top: 1px dashed var(--line); max-height: 320px; overflow: auto;
+}
+
+/* —— few-shot 注入徽标 —— */
+.agents__fewbadge {
+  font-size: 11px; padding: 3px 9px; border-radius: 999px;
+  background: rgba(34,211,238,.14); border: 1px solid rgba(34,211,238,.4); color: #5eead4;
+  font-weight: 600;
+}

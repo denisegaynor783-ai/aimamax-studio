@@ -14,6 +14,7 @@ import {
   SHOT_SKELETON,
   CINE_CONSTRAINTS,
   buildCinePrompt,
+  ZH_FEWSHOT_SEED,
   type CineShotInput,
 } from "../lib/agents";
 import { Button, IconButton, Spinner } from "../components/ui";
@@ -60,6 +61,11 @@ export default function Agents() {
   const [constraintKeys, setConstraintKeys] = useState<string[]>([]);
   const [showBase, setShowBase] = useState(false);
 
+  // ——— 中文范例参考（few-shot 展示）状态 ———
+  const [showExamples, setShowExamples] = useState(false);
+  const [openIdx, setOpenIdx] = useState(-1);
+  const [fewMeta, setFewMeta] = useState<{ corpusSize: number; used: string[] } | null>(null);
+
   const isCine = agentId === "cine-prompt";
 
   const setCineField = (k: keyof CineShotInput, v: string) =>
@@ -77,6 +83,7 @@ export default function Agents() {
   };
 
   const agent = getAgent(agentId)!;
+  const isPromptEng = agent.category === "提示词工程";
   const grouped = useMemo(
     () =>
       CATEGORIES.map((cat) => ({ cat, items: AGENTS.filter((a) => a.category === cat) })).filter(
@@ -93,6 +100,7 @@ export default function Agents() {
       const r = await runAgent(agentId, prompt, settings);
       setOutput(r.text);
       setDemo(r.demo);
+      setFewMeta(r.fewShot || null);
     } catch (e) {
       setOutput("生成失败：" + (e as Error).message);
     } finally {
@@ -199,6 +207,39 @@ export default function Agents() {
             )}
           </div>
 
+          {/* 中文范例参考面板（few-shot 展示，覆盖全部「提示词工程」类 Agent） */}
+          {isPromptEng && (
+            <div className="cine-base">
+              <button className="cine-base__toggle" onClick={() => setShowExamples((s) => !s)}>
+                <IconLink size={14} />
+                <span>中文范例参考 · {ZH_FEWSHOT_SEED.length} 条（Hell Grind 方法论示范）</span>
+                <span className="cine-base__chev">{showExamples ? "▾" : "▸"}</span>
+              </button>
+              {showExamples && (
+                <div className="ex-panel">
+                  <p className="ex-note">
+                    以下为按《Hell Grind》7 段镜头骨架 + 12 行技术底座手工构建的中文电影提示词示范（<b>非原片逐字</b>）。
+                    真实 4,561 条语料从 higgsfield.ai 公开档案导出后由后端加载，并在真实大模型调用时按关键词检索注入 few-shot。
+                  </p>
+                  {ZH_FEWSHOT_SEED.map((ex, i) => (
+                    <div className="ex-card" key={i}>
+                      <div className="ex-card__head" onClick={() => setOpenIdx(openIdx === i ? -1 : i)}>
+                        <span className="ex-card__input">{ex.input}</span>
+                        <span className="ex-card__chev">{openIdx === i ? "▾" : "▸"}</span>
+                      </div>
+                      <div className="ex-card__tags">
+                        {ex.tags.map((t) => (
+                          <span key={t} className="cine-chip">{t}</span>
+                        ))}
+                      </div>
+                      {openIdx === i && <pre className="ex-card__out">{ex.output}</pre>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* cine-prompt 结构化表单 */}
           {isCine ? (
             <div className="cine-form">
@@ -266,6 +307,11 @@ export default function Agents() {
             <div className="agents__result">
               <div className="agents__result-head">
                 <span>输出</span>
+                {fewMeta && fewMeta.used.length > 0 && (
+                  <span className="agents__fewbadge" title={`从 ${fewMeta.corpusSize} 条语料中检索命中 ${fewMeta.used.length} 条，已注入大模型 few-shot`}>
+                    范例注入 · {fewMeta.used.length}/{fewMeta.corpusSize}
+                  </span>
+                )}
                 <div className="agents__result-btns">
                   <IconButton title="复制到剪贴板" onClick={copy}>
                     <IconDuplicate size={15} />

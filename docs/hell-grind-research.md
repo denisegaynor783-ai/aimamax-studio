@@ -172,7 +172,12 @@ Hell Grind 把"记忆"从模型内搬到模型外，形成 4 类外部资产：
 - **后端公开路由未打通**：`api.ninedeerselect.com` 当前无 DNS 记录、无 Hostinger 子域 docroot（`~/domains/api.ninedeerselect.com` 不存在），后端 `~/aimamax-api` 已部署代码但未对公网开放。前端默认 `settings.apiBase=""`，故线上实际走"前端离线 Demo + 直连供应商"路径，不受此影响。
   - **需用户操作（hPanel）**：在 Hostinger 建子域 `api.ninedeerselect.com` → 文档根指向 `~/aimamax-api`（Node/Passenger）→ DNS A 记录指向服务器 IP `195.179.237.6`。建好后后端 `cine-prompt` 真实代理 + `/api/v1/characters` 自定义角色持久化即生效。
 - **真实 ToAPIs 密钥**：后端 `DEMO_MODE = !TOAPIS_KEY`，配 `TOAPIS_KEY` 环境变量即切真实模型（不耗前端额度，密钥在后端保管，符合用户"不在开发期耗第三方额度"纪律）。
-- **中文 few-shot 语料**：4,561 条中文提示词尚未批量导入提示词工程师 agent 的范例库，可作为下一轮增强。
+- **中文 few-shot 语料（已落地引擎，2026-08-16）**：**没有官方下载文件**——4,561 条只是第三方分析师对 41,083 条公开提示词的统计数字，全在网页逐条浏览。因此**未伪造**该语料，而是落地了一套可插拔 few-shot 引擎：
+  - 后端 `server/lib/prompt-corpus.js`：手工构建 **14 条**遵循 Hell Grind 方法论的高质量中文电影提示词种子范例（覆盖雨夜天台/训练室对峙/博物馆/小巷追逐/医院/巨物/童年闪回/黎明海边/酒吧/战斗/车内/楼梯/祭坛/黎明街头），CJK unigram+bigram 关键词检索 top-5，按 agent 分类只在「提示词工程」类注入（`getFewShot` + `buildFewShotBlock`）。
+  - 外部真实语料加载口：环境变量 `PROMPT_CORPUS_FILE` 指向导出 JSON 数组即自动合并进语料库（`CORPUS_SIZE` 实时反映）。若日后你从 Hell Grind 导出真实中文提示词 JSON，指向它即生效，**无需改代码**。
+  - 前端镜像：`src/lib/agents.ts` 的 `ZH_FEWSHOT_SEED` 与后端种子一致，即使无后端也展示真范例；`Agents.tsx` 新增「中文范例参考」可折叠面板 + 「范例注入 · N/M」徽标（仅提示词工程类显示）。
+  - 诚实标注：种子范例为 AIMAMAX 团队按方法论手工构建，**非 Hell Grind 原片逐字**。
+  - 验证：本地跑通 `prompt-master`/`cine-prompt` → `corpusSize=14, used=5`；`screenwriter`（非提示词工程）→ `used=0`（正确不注入）；线上 SPA bundle `index-DB190AC7.js` 含「中文范例参考」「范例注入」字符串，HTTP 200。
 
 ---
 
