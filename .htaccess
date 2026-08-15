@@ -1,0 +1,27 @@
+# AIMAMAX Studio — 静态 SPA（HashRouter，无需服务端重写）
+# 部署：本地 build → tar(dist + 本文件) → scp → 解压到 public_html
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType application/json "access plus 1 day"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  Options -Indexes
+</IfModule>
+
+# SPA 入口不缓存，保证发版即时生效；资源靠哈希文件名强缓存
+<Files index.html>
+  FileETag None
+  Header set Cache-Control "no-store, must-revalidate"
+</Files>
