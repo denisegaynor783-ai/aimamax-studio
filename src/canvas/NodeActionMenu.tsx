@@ -1,28 +1,31 @@
 // ============================================================
-// AIMAMAX Studio — 节点浮动功能菜单（统一：工具条「添加节点」与此菜单共享同一面板）
-// 吸附于选中节点旁或右击位置，提供：
-//   节点操作（复制/转生成器/结果→素材/智能剪辑/逐帧拉片/智能分镜）
-//   添加节点（与工具条完全一致：NODE_PALETTE + QUICK_GEN）
-//   脚本› / 素材库›（子面板）/ 批量操作 / 添加资源（上传）/ 工作台（导演台）
-// 所有菜单项均为真实可用功能，无占位空函数。
+// AIMAMAX Studio — 节点浮动功能菜单（统一：工具条「节点」与此菜单共享同一面板）
+// 参照目标 UI 截图布局：
+//   添加节点（文本/图片/视频/智能剪辑Beta/导演台NEW/逐帧拉片💎⚡SD2.5/音频）
+//   脚本› / 素材库›（子面板 flyout）
+//   添加资源（上传 / 从生成历史选择）
+//   + 选中节点时额外显示「节点操作」区（复制/删除/转生成器等）
 // ============================================================
 import { useCallback, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { useStudio } from "../lib/store";
 import { useReactFlow } from "@xyflow/react";
 import {
   IconScript, IconAssets, IconUpload, IconHistory, IconPlus, IconLayers,
-  IconDuplicate, IconTrash, IconChevronUp, IconDirector, IconScissors, IconFilmStrip,
+  IconDuplicate, IconTrash, IconChevronUp,
   IconLink2, IconSpark, IconImage,
 } from "../components/icons";
 import type { NodeKind } from "../lib/types";
-import { NODE_PALETTE, QUICK_GEN } from "./palette";
+import { NODE_PALETTE, ACTION_ITEMS } from "./palette";
 
 /* ── 菜单项定义 ── */
 interface MenuItem {
-  icon: (p: { size?: number }) => React.ReactNode;
+  icon: (p: { size?: number }) => ReactNode;
   label: string;
   badge?: string;
+  badge2?: string;
   badgeTone?: "signal" | "ok" | "info" | "ghost" | "film";
+  badge2Tone?: "signal" | "ok" | "info" | "ghost" | "film";
   action: () => void;
   submenu?: "script" | "asset";
   dividerBefore?: boolean;
@@ -86,18 +89,7 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
   const addNear = useCallback((kind: NodeKind): string | null => (node ? addAtNode(kind) : addAtPane(kind)),
     [node, addAtNode, addAtPane]);
 
-  // 快捷生成：新建分镜格并立即出图 / 出视频（自动连回当前节点，让上下文流过）
-  const quickGen = useCallback(
-    (gen: "image" | "video") => {
-      const id = addNear("shot");
-      if (!id) return;
-      if (node) connectRel(node.id, id, "reference");
-      generateFromNode(id, gen);
-    },
-    [addNear, node, connectRel, generateFromNode]
-  );
-
-  // 智能剪辑：在当前节点下游新建分镜格并出视频（剪辑成可生成的镜头）
+  // 智能剪辑：下游新建分镜格并出视频
   const smartClip = useCallback(() => {
     const id = addAtNode("shot");
     if (!id || !node) return;
@@ -105,7 +97,12 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     generateFromNode(id, "video");
   }, [addAtNode, node, connectRel, generateFromNode]);
 
-  // 逐帧拉片：以当前节点为源，派生 3 个并排分镜格（帧条），方便逐帧编排
+  // 进入 3D 导演台
+  const goDirector = useCallback(() => {
+    useStudio.getState().setStudioMode("stage");
+  }, []);
+
+  // 逐帧拉片：派生 3 个并排分镜格
   const frameStrip = useCallback(() => {
     if (!node) return;
     const baseX = node.position.x + 260;
@@ -120,7 +117,17 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     }
   }, [node, addNode, connectRel]);
 
-  // 上传本地图片 → 落为素材节点（离线可用）
+  // 动作项分发
+  const dispatchAction = useCallback((key: string) => {
+    switch (key) {
+      case "smartClip": smartClip(); break;
+      case "director": goDirector(); break;
+      case "frameStrip": frameStrip(); break;
+      default: break;
+    }
+  }, [smartClip, goDirector, frameStrip]);
+
+  // 上传本地图片 → 落为素材节点
   const handleFile = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -138,7 +145,7 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     [node, screenPos, rf, addNode]
   );
 
-  // 定位：优先使用屏幕坐标（右击菜单），否则从 flow 坐标转换
+  // 定位
   const menuPos = screenPos ?? rf.flowToScreenPosition({
     x: position.x + 240,
     y: position.y,
@@ -146,7 +153,7 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
 
   const closeSub = () => { setOpenSub(null); setImportOpen(false); setImportText(""); };
 
-  // ── 节点操作（仅选中真实节点时） ──
+  // ── 节点操作（仅选中真实节点时显示） ──
   const nodeOps: MenuItem[] = !node || isGroup ? [] : (() => {
     const ops: MenuItem[] = [
       { icon: IconDuplicate, label: "复制节点", action: () => useStudio.getState().duplicateNode(nodeId) },
@@ -159,23 +166,27 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     if (node.data.kind === "text") {
       ops.push({ icon: IconSpark, label: "智能分镜", action: () => useStudio.getState().storyboardFromText(nodeId) });
     }
-    ops.push({ icon: IconScissors, label: "智能剪辑", badge: "Beta", badgeTone: "ghost", action: smartClip });
-    ops.push({ icon: IconFilmStrip, label: "逐帧拉片", badge: "💎", badgeTone: "film", action: frameStrip });
     return ops;
   })();
 
-  // ── 添加节点（与工具条「添加节点」完全一致） ──
+  // ── 添加节点：内容基元 + 动作项（参照截图） ──
   const addItems: MenuItem[] = [
+    // 内容基元
     ...NODE_PALETTE.map((k): MenuItem => ({
       icon: k.icon,
       label: k.label,
       action: () => addNear(k.kind),
     })),
-    ...QUICK_GEN.map((q): MenuItem => ({
-      icon: q.icon,
-      label: q.label,
-      dividerBefore: q === QUICK_GEN[0],
-      action: () => quickGen(q.gen),
+    // 分隔线
+    ...ACTION_ITEMS.map((a): MenuItem => ({
+      icon: a.icon,
+      label: a.label,
+      badge: a.badge,
+      badge2: a.badge2,
+      badgeTone: a.badgeTone,
+      badge2Tone: a.badge2Tone,
+      dividerBefore: a === ACTION_ITEMS[0],
+      action: () => dispatchAction(a.key),
     })),
   ];
 
@@ -195,15 +206,15 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
     { icon: IconTrash, label: "删除选中", action: () => { useStudio.getState().deleteSelected(); } },
   ];
 
+  // ── 组装分区（参照截图顺序） ──
   const sections: { title: string | null; items: MenuItem[] }[] = isGroup
     ? [{ title: null, items: groupItems }]
     : [
         ...(nodeOps.length ? [{ title: "节点操作", items: nodeOps }] : []),
         { title: "添加节点", items: addItems },
         { title: null, items: [{ icon: IconScript, label: "脚本", submenu: "script" } as MenuItem, { icon: IconAssets, label: "素材库", submenu: "asset" } as MenuItem] },
-        { title: "批量操作", items: batchItems },
+        ...(node ? [{ title: "批量操作", items: batchItems }] : []),
         { title: "添加资源", items: [{ icon: IconUpload, label: "上传图片", action: () => fileRef.current?.click() }, { icon: IconHistory, label: "从生成历史选择", action: () => setOpenSub("history") }] },
-        { title: "工作台", items: [{ icon: IconDirector, label: "进入 3D 导演台", badge: "NEW", badgeTone: "ok", action: () => useStudio.getState().setStudioMode("stage") }] },
       ];
 
   return (
@@ -238,6 +249,7 @@ export function NodeActionMenu({ nodeId, position, screenPos }: { nodeId: string
                 <span className="node-action-menu__icon"><item.icon size={16} /></span>
                 <span className="node-action-menu__label">{item.label}</span>
                 {item.badge && <Badge tone={item.badgeTone}>{item.badge}</Badge>}
+                {item.badge2 && <Badge tone={item.badge2Tone}>{item.badge2}</Badge>}
                 {item.submenu && <span className="node-action-menu__arrow">›</span>}
               </button>
             ))}

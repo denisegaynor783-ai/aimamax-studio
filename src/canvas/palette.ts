@@ -1,11 +1,12 @@
 // ============================================================
-// AIMAMAX Studio — 统一节点面板（工具条「节点」与右击「添加节点」共用）
-// 保证两处暴露的节点类型与快捷生成完全一致，消除「添加节点」与右击菜单的不一致。
+// AIMAMAX Studio — 统一节点面板（工具条「节点」与右击菜单共用）
+// 参照目标 UI 截图重构：添加节点(内容基元+动作) / 脚本› / 素材库› / 添加资源
 // ============================================================
 import type { ReactNode } from "react";
 import type { NodeKind } from "../lib/types";
 import {
-  IconText, IconScene, IconImage, IconMusic, IconSpark, IconCharacter, IconVideo,
+  IconText, IconImage, IconVideo, IconMusic,
+  IconScissors, IconDirector, IconFilmStrip,
 } from "../components/icons";
 
 export interface PaletteItem {
@@ -14,25 +15,38 @@ export interface PaletteItem {
   icon: (p: { size?: number }) => ReactNode;
 }
 
-/** 可添加的节点类型（与 store.addNode 支持的 kind 对齐） */
+/** ── 添加节点区：内容基元（文本/图片/视频/音频） ── */
 export const NODE_PALETTE: PaletteItem[] = [
-  { kind: "text", label: "文本 / 脚本", icon: IconText },
-  { kind: "script", label: "剧本卡片", icon: IconText },
-  { kind: "character", label: "角色卡", icon: IconCharacter },
-  { kind: "scene", label: "场景卡", icon: IconScene },
-  { kind: "shot", label: "分镜格", icon: IconImage },
-  { kind: "asset", label: "素材", icon: IconImage },
-  { kind: "music", label: "音乐轨", icon: IconMusic },
-  { kind: "generator", label: "生成器", icon: IconSpark },
+  { kind: "text", label: "文本", icon: IconText },
+  { kind: "shot", label: "图片", icon: IconImage },
+  { kind: "shot", label: "视频", icon: IconVideo },
+  { kind: "music", label: "音频", icon: IconMusic },
 ];
 
+/** ── 添加节点区：动作项（智能剪辑/导演台/逐帧拉片） ── */
+export interface ActionItem {
+  key: string;
+  label: string;
+  icon: (p: { size?: number }) => ReactNode;
+  badge?: string;
+  badge2?: string;       // 第二个 badge（如逐帧拉片的 💎 + ⚡ SD 2.5）
+  badgeTone?: "signal" | "ok" | "info" | "ghost" | "film";
+  badge2Tone?: "signal" | "ok" | "info" | "ghost" | "film";
+}
+
+export const ACTION_ITEMS: ActionItem[] = [
+  { key: "smartClip", label: "智能剪辑", icon: IconScissors, badge: "Beta", badgeTone: "ghost" },
+  { key: "director", label: "导演台", icon: IconDirector, badge: "NEW", badgeTone: "ok" },
+  { key: "frameStrip", label: "逐帧拉片", icon: IconFilmStrip, badge: "\u{1F48E}", badgeTone: "film", badge2: "\u26A1 SD 2.5", badge2Tone: "info" },
+];
+
+/** 兼容旧接口：快捷生成（出图/出视频）仍保留供内部 quickGen 使用 */
 export interface QuickGenItem {
   gen: "image" | "video";
   label: string;
   icon: (p: { size?: number }) => ReactNode;
 }
 
-/** 快捷生成：新建分镜格并立即出图 / 出视频 */
 export const QUICK_GEN: QuickGenItem[] = [
   { gen: "image", label: "出图（分镜）", icon: IconImage },
   { gen: "video", label: "出视频（分镜）", icon: IconVideo },

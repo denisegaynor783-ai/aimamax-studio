@@ -11,7 +11,7 @@ import { Inspector } from "../canvas/Inspector";
 import { NodeActionMenu } from "../canvas/NodeActionMenu";
 import { Button, EmptyState } from "../components/ui";
 import { NewProjectModal } from "../components/NewProjectModal";
-import { IconCreate, IconProjects, IconFilm, IconCube } from "../components/icons";
+import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron } from "../components/icons";
 
 // 检视器宽度约束（紧凑默认值，可手动收缩/拉伸）
 const INSPECTOR_MIN = 248;
@@ -132,6 +132,17 @@ export default function Studio() {
 
           {/* 检视器隐藏时：浮动功能菜单吸附于选中节点旁 */}
           {floatingMenu}
+
+          {/* 检视器收起后：右侧边缘悬浮恢复按钮 */}
+          {studioMode === "canvas" && inspectorCollapsed && (
+            <button
+              className="inspector-reopen"
+              onClick={() => setInspectorCollapsed(false)}
+              title="展开检视器面板"
+            >
+              <IconChevron size={14} /> 检视器
+            </button>
+          )}
         </div>
       </div>
     </ReactFlowProvider>

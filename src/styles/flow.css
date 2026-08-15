@@ -232,9 +232,33 @@
 .studio-inspector[data-resizing="true"] .inspector-resize { background: rgba(255,107,26,0.28); }
 .inspector-resize:hover::after { background: var(--film); }
 
-/* 折叠后的展开标签页（已废弃：改为浮动菜单吸附节点） */
+/* 检视器收起后：右侧边缘悬浮恢复按钮 */
 .inspector-reopen {
-  display: none;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px 0 0 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-right: none;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  box-shadow: -2px 0 12px rgba(0,0,0,0.3);
+  transition: color 0.15s, background 0.15s;
+}
+.inspector-reopen:hover {
+  color: var(--film);
+  background: var(--bg-hover);
 }
 
 /* ── 节点浮动功能菜单（检视器隐藏时替代） ── */

@@ -27,7 +27,7 @@ import {
   IconFullscreenExit, IconLayout, IconGrid, IconAssetLib, IconTimeline,
 } from "../components/icons";
 import { NodeActionMenu } from "./NodeActionMenu";
-import { NODE_PALETTE, QUICK_GEN } from "./palette";
+import { NODE_PALETTE, ACTION_ITEMS, QUICK_GEN } from "./palette";
 import type { NodeKind, EdgeRel as EdgeRelType } from "../lib/types";
 
 const nodeTypes = { studio: StudioNode, group: GroupNode };
@@ -198,15 +198,44 @@ export function DirectorCanvas() {
           </Button>
           {addOpen && (
             <div className="addpop">
+              {/* 内容基元 */}
               {NODE_PALETTE.map((k) => {
                 const I = k.icon;
                 return (
-                  <button key={k.kind} onClick={() => addAtCenter(k.kind)}>
+                  <button key={k.kind + "-" + k.label} onClick={() => addAtCenter(k.kind)}>
                     <I size={16} /> {k.label}
                   </button>
                 );
               })}
               <div className="addpop__div" />
+              {/* 动作项：智能剪辑 / 导演台 / 逐帧拉片 */}
+              {ACTION_ITEMS.map((a) => {
+                const I = a.icon;
+                return (
+                  <button key={a.key} onClick={() => {
+                    if (a.key === "smartClip") { const id = addAtCenter("shot"); if (id) generateFromNode(id, "video"); }
+                    else if (a.key === "director") useStudio.getState().setStudioMode("stage");
+                    else if (a.key === "frameStrip") {
+                      // 逐帧拉片需要已知节点位置，从工具条调用时在中心派生
+                      const cx = rf.getViewport().x, cy = rf.getViewport().y;
+                      let prevId: string | null = null;
+                      for (let i = 0; i < 3; i++) {
+                        const id = addNode("shot", { x: cx + 200 + i * 300, y: cy + i * 8 });
+                        if (prevId) useStudio.getState().connectRel(prevId, id, "sequence");
+                        prevId = id;
+                        if (id) useStudio.getState().updateNodePayload(id, { note: `帧 ${i + 1}` });
+                      }
+                    }
+                    setAddOpen(false);
+                  }}>
+                    <I size={16} /> {a.label}
+                    {a.badge && <span style={{ fontSize: 10, fontWeight: 700, marginLeft: 4, opacity: 0.6 }}>{a.badge}</span>}
+                    {a.badge2 && <span style={{ fontSize: 10, fontWeight: 700, marginLeft: 4, opacity: 0.5 }}>{a.badge2}</span>}
+                  </button>
+                );
+              })}
+              <div className="addpop__div" />
+              {/* 快捷生成（出图/出视频） */}
               {QUICK_GEN.map((q) => {
                 const I = q.icon;
                 return (
