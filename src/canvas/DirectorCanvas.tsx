@@ -419,6 +419,7 @@ export function DirectorCanvas({ onFrameStrip }: { onFrameStrip: (origin: { x: n
             position={{ x: 0, y: 0 }}
             screenPos={ctxMenu}
             onFrameStrip={onFrameStrip}
+            onClose={() => setCtxMenu(null)}
           />
           <button
             className="ctx-close"

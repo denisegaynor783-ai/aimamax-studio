@@ -29,6 +29,7 @@ interface MenuItem {
   action: () => void;
   submenu?: "script" | "asset";
   dividerBefore?: boolean;
+  keepOpen?: boolean;
 }
 
 /* ── Badge 小标签 ── */
@@ -50,7 +51,7 @@ function Badge({ tone = "ghost", children }: { tone?: string; children: React.Re
 }
 
 /* ── 主组件 ── */
-export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { nodeId: string; position: { x: number; y: number }; screenPos?: { x: number; y: number }; onFrameStrip: (origin: { x: number; y: number }, sourceId: string | null) => void }) {
+export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip, onClose }: { nodeId: string; position: { x: number; y: number }; screenPos?: { x: number; y: number }; onFrameStrip: (origin: { x: number; y: number }, sourceId: string | null) => void; onClose?: () => void }) {
   const rf = useReactFlow();
   const { addNode, generateFromNode, nodes, assets, genHistory, connectRel } = useStudio();
   const node = nodes.find((n) => n.id === nodeId);
@@ -133,6 +134,7 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
         const pos = node ? { x: node.position.x + 260, y: node.position.y + 20 } : (screenPos ? rf.screenToFlowPosition({ x: screenPos.x, y: screenPos.y }) : { x: 120, y: 120 });
         const id = addNode("asset", pos);
         if (id) useStudio.getState().updateNodePayload(id, { results: [{ status: "success", url }], note: file.name });
+        onClose?.();
       };
       reader.readAsDataURL(file);
       e.target.value = "";
@@ -209,7 +211,7 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
         { title: "添加节点", items: addItems },
         { title: null, items: [{ icon: IconScript, label: "脚本", submenu: "script" } as MenuItem, { icon: IconAssets, label: "素材库", submenu: "asset" } as MenuItem] },
         ...(node ? [{ title: "批量操作", items: batchItems }] : []),
-        { title: "添加资源", items: [{ icon: IconUpload, label: "上传图片", action: () => fileRef.current?.click() }, { icon: IconHistory, label: "从生成历史选择", action: () => setOpenSub("history") }] },
+        { title: "添加资源", items: [{ icon: IconUpload, label: "上传图片", keepOpen: true, action: () => fileRef.current?.click() }, { icon: IconHistory, label: "从生成历史选择", keepOpen: true, action: () => setOpenSub("history") }] },
       ];
 
   return (
@@ -236,8 +238,13 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
                     setSubTop(e.currentTarget.offsetTop);
                     setOpenSub((s) => (s === item.submenu ? null : item.submenu!));
                     setImportOpen(false);
-                  } else {
+                  } else if (item.keepOpen) {
+                    // 打开子面板 / 触发文件选择：保留菜单，待子流程结束再关闭
                     item.action();
+                  } else {
+                    // 叶子动作（添加节点 / 节点操作 / 批量等）：执行后自动收起菜单
+                    item.action();
+                    onClose?.();
                   }
                 }}
               >
@@ -271,7 +278,7 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
             脚本
             <button className="node-action-submenu__x" onClick={closeSub}>×</button>
           </div>
-          <button className="node-action-submenu__item" onClick={() => { addAtNode("script"); closeSub(); }}>新建剧本</button>
+          <button className="node-action-submenu__item" onClick={() => { addAtNode("script"); onClose?.(); }}>新建剧本</button>
           <button className="node-action-submenu__item" onClick={() => setImportOpen((v) => !v)}>导入文本为脚本</button>
           {importOpen && (
             <div className="node-action-submenu__import">
@@ -291,6 +298,7 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
                     const id = addAtNode("script");
                     if (id) useStudio.getState().updateNodePayload(id, { note: importText, prompt: importText });
                     setImportText(""); setImportOpen(false); setOpenSub(null);
+                    onClose?.();
                   }}
                 >
                   确认导入
@@ -321,7 +329,7 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
               onClick={() => {
                 if (!node) return;
                 useStudio.getState().insertAssetNode(a.id, { x: node.position.x + 260, y: node.position.y + 20 });
-                closeSub();
+                onClose?.();
               }}
             >
               <span className="node-action-submenu__thumb">{a.preview ? <img src={a.preview} alt="" /> : <IconImage size={14} />}</span>
@@ -371,7 +379,7 @@ export function NodeActionMenu({ nodeId, position, screenPos, onFrameStrip }: { 
                   });
                   if (node) useStudio.getState().connectRel(node.id, newId, "reference");
                 }
-                closeSub();
+                onClose?.();
               }}
             >
               <span className="node-action-submenu__thumb">{h.url ? <img src={h.url} alt="" /> : <IconImage size={14} />}</span>
