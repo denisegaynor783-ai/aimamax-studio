@@ -207,6 +207,8 @@ export interface AppSettings {
   defaultImageModel: string;
   defaultVideoModel: string;
   defaultTextModel: string;
+  /** 后端 API 基址（ToAPIs 网关 / 微信登录 / 支付）。留空用默认 https://api.ninedeerselect.com */
+  apiBase?: string;
 }
 
 // —— 资产库 ——

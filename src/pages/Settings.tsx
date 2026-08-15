@@ -6,8 +6,9 @@ import { useState } from "react";
 import { useStudio } from "../lib/store";
 import * as db from "../lib/db";
 import { Button, Field, Toggle, Badge, Panel } from "../components/ui";
-import { IconSave, IconExport, IconImport, IconWarn, IconCheck } from "../components/icons";
-import { DEFAULT_MODELS, PROVIDER_PRESETS } from "../lib/providers";
+import { IconSave, IconExport, IconImport, IconWarn, IconCheck, IconLink } from "../components/icons";
+import { DEFAULT_MODELS, PROVIDER_PRESETS, fetchModelsFromBackend, pingBackend } from "../lib/providers";
+import { defaultApiBase } from "../lib/auth";
 import type { AppSettings, ProviderConfig, ProviderKind } from "../lib/types";
 
 function download(filename: string, content: string, mime = "application/json") {
@@ -35,11 +36,13 @@ export default function Settings() {
 
       <div className="toolrow" style={{ marginBottom: 20 }}>
         <Button variant={tab === "models" ? "primary" : "ghost"} size="sm" onClick={() => setTab("models")}>AI 模型</Button>
+        <Button variant={tab === "gateway" ? "primary" : "ghost"} size="sm" onClick={() => setTab("gateway")}>API 网关</Button>
         <Button variant={tab === "export" ? "primary" : "ghost"} size="sm" onClick={() => setTab("export")}>导出 / 导入</Button>
         <Button variant={tab === "about" ? "primary" : "ghost"} size="sm" onClick={() => setTab("about")}>关于</Button>
       </div>
 
       {tab === "models" && <ModelsTab settings={settings} updateSettings={updateSettings} saveProvider={saveProvider} />}
+      {tab === "gateway" && <GatewayTab settings={settings} updateSettings={updateSettings} saveProvider={saveProvider} />}
       {tab === "export" && <ExportTab project={project} nodes={nodes} />}
       {tab === "about" && <AboutTab />}
     </div>
@@ -141,6 +144,101 @@ function ModelSelect({ label, value, onChange, settings }: {
         {opts.map((m) => <option key={m} value={m}>{m}</option>)}
       </select>
     </Field>
+  );
+}
+
+// —— API 网关（后端：ToAPIs 代理 / 微信登录 / 支付） ——
+function GatewayTab({
+  settings,
+  updateSettings,
+  saveProvider,
+}: {
+  settings: AppSettings;
+  updateSettings: (p: Partial<AppSettings>) => Promise<void>;
+  saveProvider: (p: ProviderConfig) => Promise<void>;
+}) {
+  const [base, setBase] = useState(settings.apiBase || defaultApiBase());
+  const [ping, setPing] = useState<{ ok: boolean; demo: boolean; toapis: boolean; msg: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState("");
+
+  const test = async () => {
+    setBusy(true);
+    setPing(null);
+    try {
+      const r = await pingBackend(base);
+      setPing({ ok: true, demo: r.demo, toapis: r.toapis, msg: r.demo ? "已连接（Demo 模式，后端用占位结果）" : "已连接（ToAPIs 已配置，走真实模型）" });
+    } catch (e) {
+      setPing({ ok: false, demo: false, toapis: false, msg: "无法连接：" + (e as Error).message + "（SPA 将自动回退本地 Demo）" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pull = async () => {
+    setBusy(true);
+    setToast("");
+    try {
+      const m = await fetchModelsFromBackend(base);
+      // 写入 ToAPIs 供应商模型目录，并设为默认模型
+      const toapis = settings.providers.find((p) => p.kind === "toapis");
+      if (toapis) {
+        await saveProvider({
+          ...toapis,
+          models: Array.from(new Set([...toapis.models, ...m.text, ...m.image, ...m.video])),
+          enabled: true,
+        });
+      }
+      await updateSettings({
+        apiBase: base,
+        defaultTextModel: m.text[0] || settings.defaultTextModel,
+        defaultImageModel: m.image[0] || settings.defaultImageModel,
+        defaultVideoModel: m.video[0] || settings.defaultVideoModel,
+      });
+      setToast(`已拉取 ${m.text.length} 文本 / ${m.image.length} 图像 / ${m.video.length} 视频 模型，并写入 ToAPIs 供应商`);
+    } catch (e) {
+      setToast("拉取失败：" + (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveBase = async () => {
+    await updateSettings({ apiBase: base });
+    setToast("API 基址已保存");
+  };
+
+  return (
+    <div>
+      <Panel title="后端 API 网关" eyebrow="GATEWAY" style={{ marginBottom: 20 }}>
+        <div className="set-row__desc" style={{ marginBottom: 14, lineHeight: 1.7 }}>
+          后端统一代理 <b>ToAPIs 全模型</b>、<b>微信登录</b> 与 <b>微信支付</b>（密钥仅在后端保管，SPA 不直接暴露）。
+          配置基址并「连接测试」后，关闭 Demo 模式即走真实模型。未部署后端时 SPA 自动回退本地 Demo，不影响使用。
+        </div>
+        <Field label="API 基址">
+          <input className="input" value={base} placeholder={defaultApiBase()} onChange={(e) => setBase(e.target.value)} />
+        </Field>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+          <Button size="sm" variant="ghost" icon={<IconLink size={14} />} disabled={busy} onClick={saveBase}>保存基址</Button>
+          <Button size="sm" variant="primary" icon={<IconCheck size={14} />} disabled={busy} onClick={test}>连接测试</Button>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={pull}>拉取模型目录</Button>
+        </div>
+        {ping && (
+          <div className="set-row__desc" style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", color: ping.ok ? "var(--ok)" : "var(--danger)" }}>
+            {ping.ok ? <IconCheck size={15} /> : <IconWarn size={15} />} {ping.msg}
+          </div>
+        )}
+        {toast && <div className="set-row__desc" style={{ marginTop: 10, color: "var(--film)" }}>{toast}</div>}
+      </Panel>
+
+      <Panel title="微信登录 / 支付" eyebrow="AUTH & PAY">
+        <div className="set-row__desc" style={{ lineHeight: 1.7 }}>
+          · 微信登录：<code>/api/auth/wechat/login</code> 发起，回调签发 JWT（未配置 AppID 时自动走 Demo 游客）。<br />
+          · 微信支付：<code>/api/pay/create</code> 下单、<code>/api/pay/notify</code> 异步回调、<code>/api/pay/query</code> 查单（演示环境返回模拟支付链接）。<br />
+          · 生产需在后端 <code>.env</code> 填入 <code>WECHAT_APPID/WECHAT_SECRET</code> 与 <code>WXPAY_MCH_ID/WXPAY_API_KEY</code>，并将 <code>ALLOW_ANON</code> 设为 0 强制登录。
+        </div>
+      </Panel>
+    </div>
   );
 }
 

@@ -6,6 +6,7 @@
 // ============================================================
 import type { AppSettings, GenRequest, GenResult, ProviderConfig, ProviderKind } from "./types";
 import { uid } from "./db";
+import { getToken, resolveApiBase } from "./auth";
 
 /** 各供应商默认 baseUrl（用户可在设置页覆盖） */
 export const PROVIDER_PRESETS: Record<ProviderKind, { baseUrl: string; label: string }> = {
@@ -29,7 +30,7 @@ export function defaultProviders(): ProviderConfig[] {
 
 export const DEFAULT_MODELS: Record<ProviderKind, string[]> = {
   openai: ["gpt-4o", "gpt-4o-mini", "dall-e-3", "sora"],
-  toapis: ["toapis-text", "toapis-image", "toapis-video"],
+  toapis: ["gpt-4o", "gpt-4o-image", "gpt-image-2", "sora-2", "veo-3", "kling", "gemini-2.5-flash", "deepseek-v3"],
   volcengine: ["doubao-seed-1-6", "doubao-vision", "seedream-3-0", "cvs-video"],
   demo: ["demo-poster", "demo-reel", "demo-script"],
 };
@@ -50,6 +51,20 @@ export async function generate(req: GenRequest, settings: AppSettings): Promise<
   // Demo 引擎：离线占位
   if (settings.demoMode || req.provider === "demo") {
     return demoGenerate(req, base);
+  }
+
+  // —— 后端网关优先：配置了 apiBase 且有密钥/网关可用时，统一走后端代理 ——
+  const apiBase = settings.apiBase?.trim();
+  if (apiBase) {
+    try {
+      return await generateViaBackend(req, apiBase);
+    } catch (e) {
+      // 后端不可用（未部署/网络错误）→ 优雅回退本地 Demo，并标注原因
+      const r = await demoGenerate(req, base);
+      r.provider = "backend-unreachable";
+      r.error = `后端不可用，已回退 Demo：${(e as Error).message}`;
+      return r;
+    }
   }
 
   const prov = settings.providers.find((p) => p.id === req.provider && p.enabled);
@@ -214,4 +229,63 @@ function demoScript(prompt: string): string {
 
 function escapeXml(s: string): string {
   return s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" }[c] as string));
+}
+
+// ———————————————————————————————————————————————
+// 后端网关代理：把生成请求发到自建 API（ToAPIs 密钥在后端保管）
+// ———————————————————————————————————————————————
+export async function generateViaBackend(req: GenRequest, apiBase?: string): Promise<GenResult> {
+  const base = apiBase || resolveApiBase({ apiBase: undefined });
+  const token = getToken();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 180_000); // 视频异步任务可能较久
+  try {
+    const res = await fetch(`${base}/api/v1/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        kind: req.kind,
+        prompt: req.prompt,
+        model: req.model,
+        initImage: req.initImage,
+        params: req.params,
+      }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const j = await res.json();
+    return {
+      id: uid(),
+      kind: req.kind,
+      status: j.status === "success" ? "success" : "error",
+      text: j.text,
+      url: j.url,
+      model: req.model,
+      provider: j.provider || "toapis",
+      createdAt: Date.now(),
+      error: j.error,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** 从后端拉取模型目录（ToAPIs 全模型），用于设置页填充 */
+export async function fetchModelsFromBackend(apiBase: string, token?: string | null): Promise<{ text: string[]; image: string[]; video: string[] }> {
+  const res = await fetch(`${apiBase.replace(/\/$/, "")}/api/v1/models`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const j = await res.json();
+  return j.models as { text: string[]; image: string[]; video: string[] };
+}
+
+/** 后端健康检查（连接测试用） */
+export async function pingBackend(apiBase: string): Promise<{ ok: boolean; demo: boolean; toapis: boolean }> {
+  const res = await fetch(`${apiBase.replace(/\/$/, "")}/api/health`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }

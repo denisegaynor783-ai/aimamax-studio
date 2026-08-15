@@ -2,11 +2,12 @@
 // AIMAMAX Studio — 登录页（影院控制台风格，与主页面同源设计）
 // 脱离 Rail/TopBar 外壳，全屏沉浸式；提交后进入工作台（/）。
 // ============================================================
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui";
 import { IconFilm, IconSpark, IconImage, IconMusic, IconChevron } from "../components/icons";
+import { setToken, defaultApiBase } from "../lib/auth";
 
 const FEATURES: { icon: (p: { size?: number }) => JSX.Element; t: string; d: string }[] = [
   { icon: IconSpark, t: "AI 编剧 / 分镜", d: "就地出图、出片、出剧本" },
@@ -16,10 +17,30 @@ const FEATURES: { icon: (p: { size?: number }) => JSX.Element; t: string; d: str
 
 export default function Login() {
   const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [remember, setRemember] = useState(true);
   const [err, setErr] = useState("");
+
+  // 微信 OAuth 回调：携带 ?token= 落地时，保存 JWT 并进入工作台
+  useEffect(() => {
+    const t = params.get("token");
+    if (t) {
+      setToken(t);
+      params.delete("token");
+      setParams(params, { replace: true });
+      nav("/");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 微信登录：整页跳转后端 OAuth 入口（未配置时后端自动走 Demo 游客）
+  const wechatLogin = () => {
+    const base = defaultApiBase();
+    const redirect = encodeURIComponent(window.location.origin + "/login");
+    window.location.href = `${base}/api/auth/wechat/login?redirect=${redirect}`;
+  };
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -137,6 +158,10 @@ export default function Login() {
             <div className="login-epic__divider">
               <span>或</span>
             </div>
+
+            <Button variant="primary" block onClick={wechatLogin} style={{ background: "#07c160", borderColor: "#07c160" }}>
+              微信登录
+            </Button>
 
             <Button variant="ghost" block onClick={enterDemo}>
               DEMO 模式体验（免登录）

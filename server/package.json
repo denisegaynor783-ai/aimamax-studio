@@ -1,0 +1,14 @@
+{
+  "name": "aimamax-api",
+  "version": "0.2.0",
+  "private": true,
+  "description": "AIMAMAX Studio 后端：ToAPIs 统一网关代理 + 微信登录 + 微信支付（零依赖，仅用 Node 内置模块）",
+  "main": "passenger.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

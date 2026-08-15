@@ -43,6 +43,7 @@ function defaultSettings(): AppSettings {
     defaultImageModel: "demo-poster",
     defaultVideoModel: "demo-reel",
     defaultTextModel: "demo-script",
+    apiBase: "",
   };
 }
 
