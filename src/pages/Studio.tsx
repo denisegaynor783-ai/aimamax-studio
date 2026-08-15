@@ -14,9 +14,9 @@ import { NewProjectModal } from "../components/NewProjectModal";
 import { IconCreate, IconProjects, IconFilm, IconCube, IconChevron } from "../components/icons";
 
 // 检视器宽度约束（紧凑默认值，可手动收缩/拉伸）
-const INSPECTOR_MIN = 248;
+const INSPECTOR_MIN = 224;
 const INSPECTOR_MAX = 520;
-const INSPECTOR_DEFAULT = 300;
+const INSPECTOR_DEFAULT = 264;
 
 export default function Studio() {
   const nav = useNavigate();

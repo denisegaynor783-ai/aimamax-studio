@@ -69,7 +69,7 @@ export function DirectorCanvas() {
 
   // —— 全屏工作台（OS 级覆盖整屏 + CSS 兜底），进入后重新适配视图 ——
   const { isFs, toggle } = useFullscreen(() =>
-    window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300 }), 320)
+    window.setTimeout(() => rf.fitView({ padding: 0.2, duration: 300, maxZoom: 0.9 }), 320)
   );
 
   // —— 自动存稿（防丢） ——
@@ -152,7 +152,7 @@ export function DirectorCanvas() {
       });
     });
     applyLayout(pos);
-    window.setTimeout(() => rf.fitView({ padding: 0.18, duration: 520 }), 60);
+    window.setTimeout(() => rf.fitView({ padding: 0.18, duration: 520, maxZoom: 0.9 }), 60);
   }, [nodes, edges, applyLayout, rf]);
 
   // —— 截图保存缩略图 ——
@@ -315,6 +315,7 @@ export function DirectorCanvas() {
         }}
         deleteKeyCode={["Backspace", "Delete"]}
         fitView
+        fitViewOptions={{ padding: 0.2, maxZoom: 0.9 }}
         minZoom={0.15}
         maxZoom={2.5}
         defaultEdgeOptions={{ type: "default" }}

@@ -84,6 +84,16 @@ export function Inspector({ onCollapse }: { onCollapse?: () => void }) {
   if (!node) {
     return (
       <div className="inspector">
+        <div className="inspector__head">
+          <Badge tone="film">检视器</Badge>
+          <div style={{ display: "flex", gap: 4 }}>
+            {onCollapse && (
+              <IconButton title="收起检视器" onClick={onCollapse}>
+                <IconChevron size={16} />
+              </IconButton>
+            )}
+          </div>
+        </div>
         <div className="inspector__empty">
           <EmptyState
             icon={<IconSpark size={26} />}
